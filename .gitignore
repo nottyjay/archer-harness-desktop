@@ -4,8 +4,11 @@ dist
 src-tauri/target
 src-tauri/gen
 src-tauri/resources/node
+src-tauri/resources/node_modules/
 src-tauri/resources/preset-plugins/
 src-tauri/resources/internal-plugins/
+# Pack-time Node.js + compiled DSH (prepare:bundled-runtime); keep bundled/README.md
+src-tauri/resources/bundled/*/
 *.log
 .DS_Store
 .idea
