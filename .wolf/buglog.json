@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "bugs": [
+    {
+      "id": "bundled-runtime-env-required",
+      "timestamp": "2026-09-14T22:55:30+08:00",
+      "error_message": "DSH_BUNDLED_DIR and NODE_BUNDLED_DIR are required",
+      "file": "scripts/prepare-bundled-runtime.mjs",
+      "root_cause": "The packaging script required prebuilt runtime directories even though the repository vendors Harness source and can download the target Node distribution.",
+      "fix": "Made both variables optional overrides and prepare the target-specific Node and Harness payload automatically.",
+      "tags": ["build", "bundled-runtime", "configuration"],
+      "occurrences": 1,
+      "last_seen": "2026-09-14T22:55:30+08:00"
+    },
+    {
+      "id": "pnpm-node-sqlite-version-mismatch",
+      "timestamp": "2026-09-14T22:55:30+08:00",
+      "error_message": "Error [ERR_UNKNOWN_BUILTIN_MODULE]: No such built-in module: node:sqlite",
+      "file": "scripts/prepare-bundled-runtime.mjs",
+      "root_cause": "pnpm 11 was launched by the system Node 20 runtime while its CLI requires a newer Node built-in module.",
+      "fix": "Launch Corepack and pnpm with the bundled Node 22 binary and put that binary first in PATH for Harness build subprocesses.",
+      "tags": ["build", "node", "pnpm"],
+      "occurrences": 1,
+      "last_seen": "2026-09-14T22:55:30+08:00"
+    },
+    {
+      "id": "vendored-harness-git-head-missing",
+      "timestamp": "2026-09-14T22:55:30+08:00",
+      "error_message": "Harness client build could not resolve Git HEAD",
+      "file": "scripts/prepare-bundled-runtime.mjs",
+      "root_cause": "The vendored Harness source intentionally excludes its .git directory, but its build metadata expected a Git checkout.",
+      "fix": "Record the source revision in vendor/deepseek-harness/.source-commit and inject it as DSH_CLIENT_COMMIT_HASH during the build.",
+      "tags": ["build", "git", "vendor"],
+      "occurrences": 1,
+      "last_seen": "2026-09-14T22:55:30+08:00"
+    },
+    {
+      "id": "harness-client-react-test-types",
+      "timestamp": "2026-09-14T22:55:30+08:00",
+      "error_message": "Harness client aggregate typecheck failed with React 18 and React 19 test type conflicts",
+      "file": "scripts/prepare-bundled-runtime.mjs",
+      "root_cause": "The aggregate client typecheck included test-only React type trees that are not needed for the distributable client bundles.",
+      "fix": "Build the production client bundles directly with tsdown after the host build.",
+      "tags": ["build", "react", "typescript"],
+      "occurrences": 1,
+      "last_seen": "2026-09-14T22:55:30+08:00"
+    },
+    {
+      "id": "harness-cli-omitted-from-deploy",
+      "timestamp": "2026-09-14T22:55:30+08:00",
+      "error_message": "Compiled Harness entry is missing: .tmp/bundled-runtime/staging/darwin-aarch64/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js",
+      "file": "scripts/prepare-bundled-runtime.mjs",
+      "root_cause": "pnpm deploy copied the dsh-python-runtime-closure dependency graph but omitted the @deepseek-ai/dsh workspace package itself and retained two links to the source checkout.",
+      "fix": "Copy the CLI package's published files into the deployment, materialize links that resolve outside the deployment root, and execute the packaged CLI version check with bundled Node.",
+      "tags": ["build", "dsh", "pnpm", "packaging"],
+      "occurrences": 1,
+      "last_seen": "2026-09-14T22:55:30+08:00"
+    },
+    {
+      "id": "bundled-node-platform-name-mismatch",
+      "timestamp": "2026-09-15T09:39:36+08:00",
+      "error_message": "Startup downloads Node.js even though Node is bundled",
+      "file": "src-tauri/src/config/runtime.rs",
+      "root_cause": "The macOS package stored its runtime under darwin-aarch64 while Rust looked for macos-aarch64, then the legacy Node Installable treated the bundled runtime as missing and downloaded it into AppData.",
+      "fix": "Mapped macos to darwin for bundled resource lookup, removed Node and DSH from the startup installer, fixed runtime lookup to the package resource path, and made missing resources return explicit packaging errors.",
+      "tags": ["startup", "node", "bundled-runtime", "macos"],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T09:39:36+08:00"
+    },
+    {
+      "id": "bundled-harness-workspace-peers-missing",
+      "timestamp": "2026-09-15T09:50:00+08:00",
+      "error_message": "Cannot find package '@deepseek-ai/dsh-session-title-llm' imported from bundled Harness",
+      "file": "scripts/prepare-bundled-runtime.mjs",
+      "root_cause": "The production deploy disabled peer installation and the Python runtime closure omitted two packages referenced by the web profile, so dsh --version passed while the full plugin tree could not load.",
+      "fix": "Enabled peer installation, added dsh-session-title-llm and dsh-util-workspace-path to the closure, and added a packaging-time check that every bundled @deepseek-ai peer dependency is present.",
+      "tags": ["build", "dsh", "pnpm", "packaging", "runtime"],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T09:50:00+08:00"
+    },
+    {
+      "id": "bundled-harness-cli-hardlink-copy",
+      "timestamp": "2026-09-15T09:50:00+08:00",
+      "error_message": "ERR_FS_CP_EINVAL: Invalid src or dest: cp returned EINVAL (src and dest cannot be the same)",
+      "file": "scripts/prepare-bundled-runtime.mjs",
+      "root_cause": "After peer-complete pnpm deploy began including the DSH CLI itself, the compatibility copy attempted to overwrite the deployed file with its source hardlink.",
+      "fix": "Skip the compatibility copy whenever the deployed DSH bin.js already exists.",
+      "tags": ["build", "dsh", "hardlink", "packaging"],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T09:50:00+08:00"
+    }
+  ]
+}

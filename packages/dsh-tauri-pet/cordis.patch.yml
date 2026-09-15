@@ -1,0 +1,10 @@
+- insert:
+    - id: dsh-tauri-pet-skills
+      name: '@deepseek-ai/dsh-skill-filesystem'
+      config:
+        includeDefaultRoots: false
+        providerName: dsh-tauri-pet
+        customSkillDirs:
+          - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
+    - id: dsh-tauri-pet
+      name: dsh-tauri-pet
