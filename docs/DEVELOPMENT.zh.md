@@ -26,10 +26,7 @@ pnpm dev:plugins      # 监听内置插件构建
 pnpm typecheck        # 前端 TypeScript 检查
 pnpm build:plugins    # 构建内置插件 bundle
 pnpm tauri dev        # 调试模式运行桌面端
-pnpm tauri build         # 依次构建 Linux、Windows、macOS 安装包
-pnpm tauri build:linux   # 只构建 Linux x86_64
-pnpm tauri build:win     # 只构建 Windows x86_64
-pnpm tauri build:mac     # 只构建当前构建机架构的 macOS
+pnpm tauri build         # 构建安装包
 ```
 
 发布构建会自动编译 `vendor/deepseek-harness`，并下载目标平台对应的 Node.js

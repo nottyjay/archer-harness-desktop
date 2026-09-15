@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/dsh-tauri-desk/deepseek-harness-desktop">
+  <a href="https://github.com/nottyjay/archer-harness-desktop">
     <img src="public/favicon.svg" width="96" alt="DeepSeek Harness Desktop" />
   </a>
 </p>
@@ -12,12 +12,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/dsh-tauri-desk/deepseek-harness-desktop/releases">
-    <img src="https://img.shields.io/github/v/release/dsh-tauri-desk/deepseek-harness-desktop?style=flat-square&label=release&color=4D6BFE" alt="Release" />
+  <a href="https://github.com/nottyjay/archer-harness-desktop/releases">
+    <img src="https://img.shields.io/github/v/release/nottyjay/archer-harness-desktop?style=flat-square&label=release&color=4D6BFE" alt="Release" />
   </a>
-  <img src="https://img.shields.io/github/downloads/dsh-tauri-desk/deepseek-harness-desktop/total?style=flat-square&label=downloads&color=4D6BFE" alt="Downloads" />
-  <img src="https://img.shields.io/github/stars/dsh-tauri-desk/deepseek-harness-desktop?style=flat-square&label=stars&color=4D6BFE" alt="Stars" />
-  <img src="https://img.shields.io/github/license/dsh-tauri-desk/deepseek-harness-desktop?style=flat-square&label=license&color=4D6BFE" alt="MIT License" />
+  <img src="https://img.shields.io/github/downloads/nottyjay/archer-harness-desktop/total?style=flat-square&label=downloads&color=4D6BFE" alt="Downloads" />
+  <img src="https://img.shields.io/github/stars/nottyjay/archer-harness-desktop?style=flat-square&label=stars&color=4D6BFE" alt="Stars" />
+  <img src="https://img.shields.io/github/license/nottyjay/archer-harness-desktop?style=flat-square&label=license&color=4D6BFE" alt="MIT License" />
   <img src="https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-black?style=flat-square" alt="Windows | macOS | Linux" />
   <img src="https://img.shields.io/badge/dsh-0.1.5--rc.2-4D6BFE?style=flat-square" alt="dsh 0.1.5-rc.2" />
 </p>
@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
- <a href="https://trendshift.io/repositories/151676?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-151676" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/151676/daily?language=Rust" alt="dsh-tauri-desk%2Fdeepseek-harness-desktop | Trendshift" width="250" height="55"/></a>
+ <a href="https://trendshift.io/repositories/151676?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-151676" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/151676/daily?language=Rust" alt="nottyjay%2Farcher-harness-desktop | Trendshift" width="250" height="55"/></a>
 </p>
 
 <p align="center">
@@ -50,6 +50,10 @@
 - 🚀 **Self-update** — In-app updates; no need to re-download.
 - 🐾 **Desktop pets** — Manage Pets and Codex sources with presets that work out of the box (streamed from their upstream asset hosts, no download step), import Codex `.zip` packs, and show activity states from conversations.
 
+## Origins & Acknowledgments
+
+This project originates from [deepseek-harness-desktop](https://github.com/dsh-tauri-desk/deepseek-harness-desktop). We honor that desktop project and upstream [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness), and thank them for their contributions.
+
 ## Presets
 
 Plugins offered in the first-run wizard; select what you need and install on demand:
@@ -58,27 +62,27 @@ Plugins offered in the first-run wizard; select what you need and install on dem
 - [DSH Better Sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) — a VSCode-like right sidebar, isolated per session (Recommended)
 - [DSH Rewind](https://github.com/SiriLee/dsh-rewind) — in-window conversation rewind that never forks a new session, plus a lightweight workspace backup that restores files along with the rewind (Recommended)
 
-> The preset list is maintained by the desktop project. To request a new or updated preset, open an issue in [deepseek-harness-desktop](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/issues).
+> The preset list is maintained by the desktop project. To request a new or updated preset, open an issue in [deepseek-harness-desktop](https://github.com/nottyjay/archer-harness-desktop/issues).
 
 ## Built-in plugins
 
 First-party plugins bundled with the installer:
 
-- [DSH Tauri](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri) — provides a communication channel with the Tauri 2 shell
-- [DSH Tauri UI](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-ui) — provides a custom settings sidebar for the Tauri 2 shell
-- [DSH Tauri Worktree](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-worktree) — creates an isolated Git worktree per session, with checkout to a local branch or archive-and-abandon flows
-- [DSH Tauri Panel](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-panel) — sidebar shell: compact logo row, a panel area (New Session + third-party panel items via `sidebar.panel.action`), and the `panel.protocol` service
-- [DSH Tauri Panel Extension](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-panel-extension) — Skills and MCP management with skill repository import
-- [DSH Tauri Panel Scheduler](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/tree/main/packages/dsh-tauri-panel-scheduler) — creates daily, interval, weekday, and weekly scheduled tasks; runs them in independent Agent sessions and retains run history
-- [DSH Tauri Turn Rewind](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/tree/main/packages/dsh-tauri-turnrewind) — records private Git snapshots per Agent turn, shows file-change cards, and safely undoes a turn with conflict protection
-- [DSH Tauri Session](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-session) — replaces workspace deletion with archiving and adds an Archived Chats settings page with search, sorting, grouping, project filtering, and unarchive support
-- [DSH Tauri Pet](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/tree/main/packages/dsh-tauri-pet) — manages Chat / Codex pets, preset downloads, resource-pack imports, and conversation activity states
-- [DSH Tauri Rightclick](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-rightclick) — native-style right-click context menus for sessions, workspaces, conversation text, links, and inputs
+- [DSH Tauri](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri) — provides a communication channel with the Tauri 2 shell
+- [DSH Tauri UI](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-ui) — provides a custom settings sidebar for the Tauri 2 shell
+- [DSH Tauri Worktree](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-worktree) — creates an isolated Git worktree per session, with checkout to a local branch or archive-and-abandon flows
+- [DSH Tauri Panel](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-panel) — sidebar shell: compact logo row, a panel area (New Session + third-party panel items via `sidebar.panel.action`), and the `panel.protocol` service
+- [DSH Tauri Panel Extension](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-panel-extension) — Skills and MCP management with skill repository import
+- [DSH Tauri Panel Scheduler](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-panel-scheduler) — creates daily, interval, weekday, and weekly scheduled tasks; runs them in independent Agent sessions and retains run history
+- [DSH Tauri Turn Rewind](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-turnrewind) — records private Git snapshots per Agent turn, shows file-change cards, and safely undoes a turn with conflict protection
+- [DSH Tauri Session](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-session) — replaces workspace deletion with archiving and adds an Archived Chats settings page with search, sorting, grouping, project filtering, and unarchive support
+- [DSH Tauri Pet](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-pet) — manages Chat / Codex pets, preset downloads, resource-pack imports, and conversation activity states
+- [DSH Tauri Rightclick](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-rightclick) — native-style right-click context menus for sessions, workspaces, conversation text, links, and inputs
 - More plugins coming soon...
 
 ## Quick Start
 
-Download the installer for your platform from [Releases](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/releases), install, and launch.
+Download the installer for your platform from [Releases](https://github.com/nottyjay/archer-harness-desktop/releases), install, and launch.
 
 **macOS (Homebrew):** you can also install it in one command via Homebrew:
 
@@ -149,9 +153,10 @@ The Harness bundle is compiled as part of the desktop build and distributed insi
 
 ## Related
 
+- [deepseek-harness-desktop](https://github.com/dsh-tauri-desk/deepseek-harness-desktop) — the desktop project this app originates from
 - [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) — the upstream `dsh` agent platform
 - [deepseek-harness-pkg](https://github.com/dsh-tauri-desk/deepseek-harness-pkg) — prebuilt Harness bundles consumed by this app
-- [dsh-tauri-plugins](https://github.com/dsh-tauri-desk/dsh-tauri-plugins) — development repository for some bundled plugin packages
+- [dsh-tauri-plugins](https://github.com/nottyjay/archer-harness-desktop) — development repository for some bundled plugin packages
 - [n8n-desktop](https://github.com/tangtao646/n8n-desktop) — reference implementation
 
 ### Plugin data sources

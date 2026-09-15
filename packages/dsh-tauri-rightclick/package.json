@@ -5,12 +5,12 @@
   "description": "Native-style right-click context menus for DeepSeek Harness desktop wrappers (sessions, workspaces, conversation text, links, inputs).",
   "author": "Hairyf <wwu710632@gmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/dsh-tauri-desk/dsh-tauri-plugins#readme",
+  "homepage": "https://github.com/nottyjay/archer-harness-desktop#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dsh-tauri-desk/dsh-tauri-plugins.git"
+    "url": "git+https://github.com/nottyjay/archer-harness-desktop.git"
   },
-  "bugs": "https://github.com/dsh-tauri-desk/dsh-tauri-plugins/issues",
+  "bugs": "https://github.com/nottyjay/archer-harness-desktop/issues",
   "keywords": [
     "dsh",
     "plugin",

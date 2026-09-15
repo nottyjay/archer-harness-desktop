@@ -1,7 +1,7 @@
 {
   "name": "archer",
   "type": "module",
-  "version": "0.14.1",
+  "version": "0.0.1-alpha",
   "private": true,
   "packageManager": "pnpm@10.28.2",
   "description": "Desktop application for DeepSeek Harness (dsh) — one-click local install and launch, no Node.js setup required.",
@@ -13,19 +13,15 @@
     "build": "tsc && vite build",
     "build:plugins": "tsx scripts/build-plugins.ts",
     "prepare:bundled-runtime": "node scripts/prepare-bundled-runtime.mjs",
-    "build:linux": "node scripts/build-tauri.mjs linux",
-    "build:win": "node scripts/build-tauri.mjs win",
-    "build:mac": "node scripts/build-tauri.mjs mac",
-    "build:all": "node scripts/build-tauri.mjs all",
     "preview": "vite preview",
-    "tauri": "node scripts/tauri.mjs",
+    "tauri": "tauri",
     "release": "bumpp --pr",
     "test": "vitest",
     "lint": "eslint",
     "knip": "knip",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "icons": "tauri icon assets/harness-logo.png && tsx scripts/rebuild-macos-icon.ts"
+    "icons": "tauri icon assets/macos.svg && tsx scripts/rebuild-macos-icon.ts"
   },
   "dependencies": {
     "@gravity-ui/icons": "catalog:runtime",
@@ -77,6 +73,7 @@
     "@deepseek-ai/dsh-user-approval": "catalog:dsh",
     "@deepseek-ai/dsh-workspace": "catalog:dsh",
     "@eslint-react/eslint-plugin": "catalog:lint",
+    "@resvg/resvg-js": "catalog:build",
     "@tailwindcss/postcss": "catalog:build",
     "@tailwindcss/vite": "catalog:build",
     "@tauri-apps/cli": "catalog:tauri",

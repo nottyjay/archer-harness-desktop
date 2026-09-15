@@ -1,6 +1,6 @@
 [package]
 name = "archer"
-version = "0.14.1"
+version = "0.0.1-alpha"
 description = "Desktop application for DeepSeek Harness (dsh)"
 authors = [ "Archer contributors" ]
 edition = "2021"

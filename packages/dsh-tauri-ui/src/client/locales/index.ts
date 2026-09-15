@@ -38,8 +38,10 @@ export function registerSettingsLocale(ctx: ClientContext): void {
 }
 
 /** 按当前活跃语言取一条文案。 */
-export function settingsText(key: SettingsUiKey): string {
-  return activeLocale === 'zh' ? DICT_ZH[key] : DICT_EN[key]
+export function settingsText(key: SettingsUiKey, values: Record<string, string | number> = {}): string {
+  const template = activeLocale === 'zh' ? DICT_ZH[key] : DICT_EN[key]
+  return template.replace(/\{(\w+)\}/g, (match, name: string) =>
+    Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match)
 }
 
 /** 组件内订阅 locale 变更（revision 前进即重渲染）。 */

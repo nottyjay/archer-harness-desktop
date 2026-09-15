@@ -8,6 +8,8 @@ export const SETTINGS_SIDEBAR_SLOT = 'sidebar.settings'
 export const SETTINGS_SECTION_SLOT = 'settings.section'
 export const SETTINGS_TRIGGER_SLOT = 'settings.trigger'
 export const SETTINGS_ONBOARDING_SLOT = 'settings.onboarding'
+/** Official internal-testing notice; desktop skips it and starts at API-key setup. */
+export const SETTINGS_WELCOME_ONBOARDING_ID = 'welcome-notice'
 
 export const SETTINGS_SHELL_SEAT_ID = SETTINGS_UI_PLUGIN
 export const SETTINGS_SIDEBAR_ID = 'dsh-tauri-ui-settings'
@@ -22,6 +24,16 @@ export const TURN_NAVIGATION_SELECTOR = `:is(nav[aria-label="${TURN_NAVIGATION_L
 export const TURN_NAVIGATION_NARROW_SELECTOR = `[data-sidebar-collapsed] ${TURN_NAVIGATION_SELECTOR}`
 export const SETTINGS_REGISTRANT = SETTINGS_UI_PLUGIN
 export const SETTINGS_TRIGGER_PRIORITY = -1
+export const SETTINGS_GENERAL_ITEM_SLOT = 'settings.general.item'
+export const SETTINGS_ABOUT_ITEM_ID = 'dsh-tauri-ui-about'
+export const SETTINGS_ABOUT_ITEM_ORDER = 1000
+export const SETTINGS_ABOUT_ITEM_EFFECT = 'dsh-tauri-ui: general about row'
+export const SETTINGS_ABOUT_STYLE_ID = 'dsh-tauri-ui-about-row-styles'
+/** Tauri 2 built-in; iframe 经宿主桥读取当前桌面端版本。 */
+export const CMD_GET_APP_VERSION = 'plugin:app|version'
+export const CMD_OPEN_EXTERNAL_URL = 'open_external_url'
+export const CREDIT_DESKTOP_URL = 'https://github.com/dsh-tauri-desk/deepseek-harness-desktop'
+export const CREDIT_HARNESS_URL = 'https://github.com/deepseek-ai/deepseek-harness'
 
 export const SETTINGS_UNDERLAY_SLOT_KEYS = ['sidebar', 'conversation', 'details'] as const
 export const SETTINGS_EXTERNAL_OVERLAY_SELECTORS = ['[data-dsh-better-sidebar]', '[data-dsh-panel]'] as const
@@ -35,6 +47,12 @@ export const DICT_ZH = {
   search: '搜索设置…',
   settings: '设置',
   noResults: '没有匹配的设置项',
+  version: '版本',
+  versionFallback: '—',
+  thanks: '本项目源自 {{desktop}}，并感谢上游 {{harness}} 的贡献。',
+  thanksDesktop: 'deepseek-harness-desktop',
+  thanksHarness: 'deepseek-harness',
+  openCredit: '在浏览器中打开 {name}',
 } as const
 
 export const DICT_EN: Record<keyof typeof DICT_ZH, string> = {
@@ -42,4 +60,10 @@ export const DICT_EN: Record<keyof typeof DICT_ZH, string> = {
   search: 'Search settings…',
   settings: 'Settings',
   noResults: 'No matching settings',
+  version: 'Version',
+  versionFallback: '—',
+  thanks: 'This project originates from {{desktop}}, with thanks to upstream {{harness}}.',
+  thanksDesktop: 'deepseek-harness-desktop',
+  thanksHarness: 'deepseek-harness',
+  openCredit: 'Open {name} in the browser',
 }

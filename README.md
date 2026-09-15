@@ -1,10 +1,10 @@
 <p align="center">
-  <a href="https://github.com/dsh-tauri-desk/deepseek-harness-desktop">
+  <a href="https://github.com/nottyjay/archer-harness-desktop">
     <img src="public/favicon.svg" width="96" alt="DeepSeek Harness Desktop" />
   </a>
 </p>
 
-<h1 align="center">DeepSeek Harness 桌面版</h1>
+<h1 align="center">Archer Harness 桌面版</h1>
 
 <p align="center">
   在桌面上一键运行 <a href="https://github.com/deepseek-ai/deepseek-harness">DeepSeek Harness</a> ——<br />
@@ -12,12 +12,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/dsh-tauri-desk/deepseek-harness-desktop/releases">
-    <img src="https://img.shields.io/github/v/release/dsh-tauri-desk/deepseek-harness-desktop?style=flat-square&label=release&color=4D6BFE" alt="Release" />
+  <a href="https://github.com/nottyjay/archer-harness-desktop/releases">
+    <img src="https://img.shields.io/github/v/release/nottyjay/archer-harness-desktop?style=flat-square&label=release&color=4D6BFE" alt="Release" />
   </a>
-  <img src="https://img.shields.io/github/downloads/dsh-tauri-desk/deepseek-harness-desktop/total?style=flat-square&label=downloads&color=4D6BFE" alt="Downloads" />
-  <img src="https://img.shields.io/github/stars/dsh-tauri-desk/deepseek-harness-desktop?style=flat-square&label=stars&color=4D6BFE" alt="Stars" />
-  <img src="https://img.shields.io/github/license/dsh-tauri-desk/deepseek-harness-desktop?style=flat-square&label=license&color=4D6BFE" alt="MIT License" />
+  <img src="https://img.shields.io/github/downloads/nottyjay/archer-harness-desktop/total?style=flat-square&label=downloads&color=4D6BFE" alt="Downloads" />
+  <img src="https://img.shields.io/github/stars/nottyjay/archer-harness-desktop?style=flat-square&label=stars&color=4D6BFE" alt="Stars" />
+  <img src="https://img.shields.io/github/license/nottyjay/archer-harness-desktop?style=flat-square&label=license&color=4D6BFE" alt="MIT License" />
   <img src="https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-black?style=flat-square" alt="Windows | macOS | Linux" />
   <img src="https://img.shields.io/badge/dsh-0.1.5--rc.2-4D6BFE?style=flat-square" alt="dsh 0.1.5-rc.2" />
 </p>
@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
- <a href="https://trendshift.io/repositories/151676?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-151676" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/151676/daily?language=Rust" alt="dsh-tauri-desk%2Fdeepseek-harness-desktop | Trendshift" width="250" height="55"/></a>
+ <a href="https://trendshift.io/repositories/151676?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-151676" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/151676/daily?language=Rust" alt="nottyjay%2Farcher-harness-desktop | Trendshift" width="250" height="55"/></a>
 </p>
 
 
@@ -45,6 +45,10 @@
 - 📦 **固定运行时** — Node 与 Harness 内核在构建时按目标平台打包，运行时直接使用安装包内资源；
 - 🐾 **桌宠** — 提供 Pets / Codex 双来源桌宠管理，预设宠物开箱即用（直连远端素材，无需下载）、可导入 Codex `.zip` 资源包，并根据会话活动显示状态气泡。
 
+## 致谢与来源
+
+本项目源自 [deepseek-harness-desktop](https://github.com/dsh-tauri-desk/deepseek-harness-desktop)。向该桌面端项目与上游 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 致敬，感谢他们的贡献。
+
 ## 预设插件
 
 首次启动引导中提供的插件，按需勾选安装：
@@ -53,27 +57,27 @@
 - [DSH Better Sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) — 类 VSCode 右侧栏，按会话隔离（推荐）
 - [DSH Rewind](https://github.com/SiriLee/dsh-rewind) — 同窗口内对话回退，从不新建会话分支；自带轻量工作区备份，回退时可一并还原文件（推荐）
 
-> 预设插件清单由桌面端维护。为避免不稳定的预设插件导致软件异常，如需新增或更新预设，请在 [deepseek-harness-desktop/issues](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/issues) 提起请求。
+> 预设插件清单由桌面端维护。为避免不稳定的预设插件导致软件异常，如需新增或更新预设，请在 [deepseek-harness-desktop/issues](https://github.com/nottyjay/archer-harness-desktop/issues) 提起请求。
 
 ## 内置插件
 
 随安装包资源内置的第一方插件：
 
-- [DSH Tauri](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri) — 提供与 Tauri 2 外壳的通信通道
-- [DSH Tauri UI](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-ui) — 为 Tauri 2 外壳提供自定义设置侧边栏
-- [DSH Tauri Worktree](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-worktree) — 为每个会话创建隔离的 Git Worktree，并支持检出到本地分支或归档放弃
-- [DSH Tauri Panel](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-panel) — 侧栏外壳、面板协议
-- [DSH Tauri Panel Extension](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-panel-extension) — Skills/MCP 管理与导入技能仓库
-- [DSH Tauri Panel Scheduler](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/tree/main/packages/dsh-tauri-panel-scheduler) — 创建每天、间隔、工作日或每周的定时任务；在独立 Agent 会话中执行，并保留执行记录
-- [DSH Tauri Turn Rewind](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/tree/main/packages/dsh-tauri-turnrewind) — 按 Agent 回合记录私有 Git 快照、显示文件变更卡片，并在冲突保护下撤销该回合改动
-- [DSH Tauri Session](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-session) — 将删除工作区改为归档，并提供支持搜索、排序、分组、项目筛选和取消归档的「已归档聊天」设置页
-- [DSH Tauri Pet](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/tree/main/packages/dsh-tauri-pet) — 管理 Chat / Codex 桌宠、预设宠物下载、资源包导入和会话活动状态
-- [DSH Tauri Rightclick](https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-rightclick) — 为会话、工作区、正文、链接和输入框补充常用操作
+- [DSH Tauri](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri) — 提供与 Tauri 2 外壳的通信通道
+- [DSH Tauri UI](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-ui) — 为 Tauri 2 外壳提供自定义设置侧边栏
+- [DSH Tauri Worktree](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-worktree) — 为每个会话创建隔离的 Git Worktree，并支持检出到本地分支或归档放弃
+- [DSH Tauri Panel](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-panel) — 侧栏外壳、面板协议
+- [DSH Tauri Panel Extension](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-panel-extension) — Skills/MCP 管理与导入技能仓库
+- [DSH Tauri Panel Scheduler](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-panel-scheduler) — 创建每天、间隔、工作日或每周的定时任务；在独立 Agent 会话中执行，并保留执行记录
+- [DSH Tauri Turn Rewind](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-turnrewind) — 按 Agent 回合记录私有 Git 快照、显示文件变更卡片，并在冲突保护下撤销该回合改动
+- [DSH Tauri Session](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-session) — 将删除工作区改为归档，并提供支持搜索、排序、分组、项目筛选和取消归档的「已归档聊天」设置页
+- [DSH Tauri Pet](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-pet) — 管理 Chat / Codex 桌宠、预设宠物下载、资源包导入和会话活动状态
+- [DSH Tauri Rightclick](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-rightclick) — 为会话、工作区、正文、链接和输入框补充常用操作
 - 更多即将引入的插件...
 
 ## 快速开始
 
-从 [Releases](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/releases) 下载对应平台安装包，安装后启动即可。
+从 [Releases](https://github.com/nottyjay/archer-harness-desktop/releases) 下载对应平台安装包，安装后启动即可。
 
 **macOS（Homebrew）：** 也可通过 Homebrew 一键安装：
 
@@ -146,9 +150,10 @@ Harness 发行版在桌面端构建时编译并随安装包分发。运行时直
 
 ## 相关项目
 
+- [deepseek-harness-desktop](https://github.com/dsh-tauri-desk/deepseek-harness-desktop) — 本项目的来源桌面端
 - [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) — 上游 `dsh` agent 平台
 - [deepseek-harness-pkg](https://github.com/dsh-tauri-desk/deepseek-harness-pkg) — 预打包 Harness 发行版（本应用下载源）
-- [dsh-tauri-plugins](https://github.com/dsh-tauri-desk/dsh-tauri-plugins) — 部分内置插件包的开发源仓库
+- [dsh-tauri-plugins](https://github.com/nottyjay/archer-harness-desktop) — 部分内置插件包的开发源仓库
 - [n8n-desktop](https://github.com/tangtao646/n8n-desktop) — 参考实现
 
 ### 插件数据源

@@ -9,7 +9,7 @@
 - 上游仓库路径：`source/dsh-automation`
 - 上游 HEAD：`e5e3596`（`mcp: card actions align right and wrap as a block; compact labels (0.3.10)`）
 - 当前扩展版本：`0.6.7`
-- 本次同步 PR：[#413](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/pull/413)
+- 本次同步 PR：[#413](https://github.com/nottyjay/archer-harness-desktop/pull/413)
 - 本次同步提交：`60267cd`；CI lint 修复提交：`7f4fc95`
 - 同步范围：MCP 管理能力；**未同步 Market 模块**
 

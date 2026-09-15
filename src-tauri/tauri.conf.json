@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Archer",
-  "version": "0.14.1",
+  "version": "0.0.1-alpha",
   "identifier": "com.d3code.archer-harness",
   "build": {
     "beforeDevCommand": "pnpm dev",

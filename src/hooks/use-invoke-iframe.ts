@@ -28,9 +28,11 @@ interface InvokeBridgeRequest {
 }
 
 /**
- * 允许 iframe 桥调用的 Tauri command 白名单（与 dsh-tauri-pet 的
- * service/pet.ts 一一对应）。凡新增可经桥调用的 command 必须在此登记，
- * 防止 iframe 内其他插件借道桥执行任意 Tauri command（越权）。
+ * 允许 iframe 桥调用的 Tauri command 白名单。
+ * 桌宠命令对应 dsh-tauri-pet；`plugin:app|version` 与 `open_external_url`
+ * 对应 dsh-tauri-ui 通用设置底部的版本号与致谢外链。
+ * 凡新增可经桥调用的 command 必须在此登记，防止 iframe 内其他插件借道桥
+ * 执行任意 Tauri command（越权）。
  */
 const ALLOWED_INVOKE_CMDS = new Set([
   'get_pet_status',
@@ -42,6 +44,8 @@ const ALLOWED_INVOKE_CMDS = new Set([
   'import_pet',
   'get_pet_asset',
   'list_preset_pets',
+  'plugin:app|version',
+  'open_external_url',
 ])
 
 export function useInvokeIframe(iframeRef: RefObject<HTMLIFrameElement | null>): void {

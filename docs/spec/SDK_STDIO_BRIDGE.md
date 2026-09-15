@@ -1,6 +1,6 @@
 # Phase 3：SDK stdio 桥 —— dsh-sdk-* 接口盘点单（评估/预留）
 
-> 状态：**接口盘点 + 复用性评估（未实现代码）**。对应 [issue #286](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/issues/286)
+> 状态：**接口盘点 + 复用性评估（未实现代码）**。对应 [issue #286](https://github.com/nottyjay/archer-harness-desktop/issues/286)
 > 「Phase 3: SDK stdio 桥 —— `dsh-sdk-jsonrpc-server` 作为 web 端口之外的第二条交互通道」。本文只做盘点与选型判断，不改代码。
 
 ## 1. 结论速览（TL;DR）

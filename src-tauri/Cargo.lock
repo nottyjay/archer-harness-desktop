@@ -81,7 +81,7 @@ dependencies = [
 
 [[package]]
 name = "archer"
-version = "0.14.1"
+version = "0.0.1-alpha"
 dependencies = [
  "arboard",
  "async-trait",

@@ -3,6 +3,7 @@ import { useMemo, useSyncExternalStore } from 'react'
 import { SETTINGS_ONBOARDING_SLOT, SETTINGS_SECTION_SLOT } from '../constants'
 import { useSettingsLocale } from '../locales'
 import { getSettingsSlots } from '../register/sections'
+import { omitWelcomeNoticeStep } from '../utils/onboarding'
 
 export type { SettingsRow } from '../types'
 /**
@@ -14,7 +15,8 @@ export type { SettingsRow } from '../types'
  * 版本 + locale 变更，重算 `entries(key) -> {id, order, label}` 排序行。
  *
  * label 与官方一致经 resolveSlotLabel 语义解析（函数型 label 即按当前
- * locale 求值，所以 locale 变更也要触发重算）。
+ * locale 求值，所以 locale 变更也要触发重算）。桌面端跳过官方内测声明
+ * （welcome-notice），空白 Hero 直接进入补 API Key。
  *
  * 槽注册中心引用不在此持有：由 register/sections.ts 的 registerSettingsSections
  * 在 apply 时存入（卸载即清），本文件经 getSettingsSlots() 读取——槽位
@@ -69,8 +71,11 @@ export function useSettingsSectionRows(): SettingsRow[] {
   return useMemo(() => projectRows(SETTINGS_SECTION_SLOT), [sectionVersion])
 }
 
-/** 引导步骤行（'settings.onboarding' 投影，仅 id+order）。 */
+/** 引导步骤行（'settings.onboarding' 投影，仅 id+order；不含内测声明）。 */
 export function useSettingsOnboardingSteps(): SettingsRow[] {
   const onboardingVersion = useSlotVersion(SETTINGS_ONBOARDING_SLOT)
-  return useMemo(() => projectRows(SETTINGS_ONBOARDING_SLOT), [onboardingVersion])
+  return useMemo(
+    () => omitWelcomeNoticeStep(projectRows(SETTINGS_ONBOARDING_SLOT)),
+    [onboardingVersion],
+  )
 }

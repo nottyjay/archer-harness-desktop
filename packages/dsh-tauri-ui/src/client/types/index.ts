@@ -41,7 +41,23 @@ export interface SettingsRow {
 }
 
 /** Keys in the settings UI translation dictionary. */
-export type SettingsUiKey = 'back' | 'search' | 'settings' | 'noResults'
+export type SettingsUiKey =
+  | 'back'
+  | 'search'
+  | 'settings'
+  | 'noResults'
+  | 'version'
+  | 'versionFallback'
+  | 'thanks'
+  | 'thanksDesktop'
+  | 'thanksHarness'
+  | 'openCredit'
+
+/** One segment of the localized thanks sentence (plain text or a credit link). */
+export type ThanksPart =
+  | { type: 'text', value: string }
+  | { type: 'desktop' }
+  | { type: 'harness' }
 
 /** One option displayed by the shared primitives Menu select. */
 export interface MenuSelectOption {

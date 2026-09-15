@@ -36,7 +36,7 @@ pub use install::{check, download, open_installer, DesktopDownloadProgress, Desk
 pub use pending::launch_pending_installer;
 
 /// 仓库主页（同时用于构造 atom / expanded_assets / 下载地址）
-const REPO_URL: &str = "https://github.com/hairyf/deepseek-harness-desktop";
+const REPO_URL: &str = "https://github.com/nottyjay/archer-harness-desktop";
 /// 版权信息（与 tauri.conf.json bundle.copyright 保持一致）
 const COPYRIGHT: &str = "Copyright © 2026 Archer contributors";
 /// About 对话框的 "Powered by" 文案

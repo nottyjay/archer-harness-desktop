@@ -44,9 +44,9 @@ body:
       label: 检查清单
       description: 提交之前，请确认你已完成以下事项
       options:
-        - label: 阅读了项目的 [README](https://github.com/dsh-tauri-desk/deepseek-harness-desktop)
+        - label: 阅读了项目的 [README](https://github.com/nottyjay/archer-harness-desktop)
           required: true
-        - label: 检查[已有 issues](https://github.com/dsh-tauri-desk/deepseek-harness-desktop/issues) 中没有相同问题的报告，避免重复提交
+        - label: 检查[已有 issues](https://github.com/nottyjay/archer-harness-desktop/issues) 中没有相同问题的报告，避免重复提交
           required: true
         - label: 确认这是具体、可复现的 Bug，而不是使用咨询
           required: true

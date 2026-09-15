@@ -10,7 +10,8 @@ import { SlotOutlet } from '@deepseek-ai/dsh-client-ui-renderer'
  *   - 同款触发按钮（内容借 <SlotOutlet slotKey="settings.trigger"/> 复用官方的
  *     TriggerContent = 齿轮图标 + label，样式由本组件实现）；
  *   - 宿主 onboarding（谓词与官方一致：phase==='ready' 且无会话或当前会话
- *     blank），步骤经 <SlotOutlet slotKey="settings.onboarding"/> 渲染。
+ *     blank），步骤经 <SlotOutlet slotKey="settings.onboarding"/> 渲染；
+ *     跳过官方内测声明，空白 Hero 直接进入补 API Key。
  *
  * 关键点：本条目**不声明任何 children**（声明的六列子槽归属于官方条目，
  * 再声明会 throw），所有“渲染他人声明的槽”都走 SlotOutlet —— 这也是

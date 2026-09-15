@@ -26,10 +26,7 @@ pnpm dev:plugins      # watch built-in plugins
 pnpm typecheck        # frontend TypeScript check
 pnpm build:plugins    # build built-in plugin bundles
 pnpm tauri dev        # run the desktop app in debug mode
-pnpm tauri build         # build Linux, Windows, and macOS installers in sequence
-pnpm tauri build:linux   # Linux x86_64 only
-pnpm tauri build:win     # Windows x86_64 only
-pnpm tauri build:mac     # macOS for the host architecture only
+pnpm tauri build         # build the current platform installer
 ```
 
 Release builds compile `vendor/deepseek-harness` and download the matching

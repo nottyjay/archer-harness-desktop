@@ -150,6 +150,8 @@ pub fn initial_icon<R: Runtime>(app: &AppHandle<R>) -> Image<'static> {
     #[cfg(target_os = "macos")]
     {
         if let Ok(icon) = Image::from_bytes(MACOS_TRAY_BYTES) {
+            // White glyph on the dark tile. Black-on-dark has no contrast
+            // and reads as a solid blob in the menu bar.
             return make_opaque(&icon.to_owned(), [31, 41, 55]);
         }
     }

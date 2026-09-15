@@ -22,7 +22,8 @@ import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
  *   - hooks/sections.ts + register/sections.ts   'settings.section' /
  *     'settings.onboarding' 注册条目的导航行投影（hooks 订阅槽位与 locale
  *     变更；installer 持有 slotsRef）。
- *   - locales/     本插件文案（返回应用/搜索设置…）双语注册。
+ *   - locales/     本插件文案（返回应用/搜索设置…/版本与致谢）双语注册。
+ *   - register/about-row.ts  settings.general.item 底部版本号与来源致谢。
  *
  * 保留了骨架期的 `shell.overlay` 条目（id dsh-tauri-ui）作为未来 chrome
  * 的落点，与设置侧边栏（id dsh-tauri-ui-settings）并行不冲突。
@@ -38,6 +39,7 @@ import {
   TURN_NAVIGATION_STYLE_ID,
 } from './constants'
 import { registerSettingsLocale } from './locales'
+import { registerAboutRow } from './register/about-row'
 import { registerSettingsSections } from './register/sections'
 import { registerSettingsSidebar } from './register/sidebar'
 import { registerSettingsTrigger } from './register/trigger'
@@ -103,6 +105,7 @@ export function apply(ctx: ClientContext): void {
     () => registerSettingsSections(ctx.slots as never),
     'dsh-tauri-ui: settings sections projection',
   )
+  registerAboutRow(ctx)
   if (typeof SlotOutlet === 'function') {
     registerSettingsSidebar(ctx)
     registerSettingsTrigger(ctx)

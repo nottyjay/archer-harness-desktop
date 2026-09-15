@@ -241,9 +241,9 @@ mod tests {
     #[test]
     fn parse_atom_entries_multiple_entries_in_order() {
         let feed = r#"<feed>
-            <entry><id>1</id><link rel="alternate" href="/hairyf/deepseek-harness-desktop/releases/tag/v0.7.14-rc.1"/><updated>2026-08-20T01:00:00Z</updated></entry>
-            <entry><id>2</id><link rel="alternate" href="/hairyf/deepseek-harness-desktop/releases/tag/v0.7.13"/><updated>2026-08-19T00:00:00Z</updated></entry>
-            <entry><id>3</id><link rel="alternate" href="/hairyf/deepseek-harness-desktop/releases/tag/test-main-42"/></entry>
+            <entry><id>1</id><link rel="alternate" href="/nottyjay/archer-harness-desktop/releases/tag/v0.7.14-rc.1"/><updated>2026-08-20T01:00:00Z</updated></entry>
+            <entry><id>2</id><link rel="alternate" href="/nottyjay/archer-harness-desktop/releases/tag/v0.7.13"/><updated>2026-08-19T00:00:00Z</updated></entry>
+            <entry><id>3</id><link rel="alternate" href="/nottyjay/archer-harness-desktop/releases/tag/test-main-42"/></entry>
         </feed>"#;
         assert_eq!(
             parse_atom_entries(feed),
@@ -264,9 +264,9 @@ mod tests {
     fn extract_asset_names_parses_download_links() {
         let tag = "v0.6.6";
         let html = r#"
-            <a href="/hairyf/deepseek-harness-desktop/releases/download/v0.6.6/x64-setup.exe">x</a>
-            <a href="/hairyf/deepseek-harness-desktop/releases/download/v0.6.6/x64_en-US.msi">y</a>
-            <a href="/hairyf/deepseek-harness-desktop/releases/download/v0.6.5/old.dmg">z</a>
+            <a href="/nottyjay/archer-harness-desktop/releases/download/v0.6.6/x64-setup.exe">x</a>
+            <a href="/nottyjay/archer-harness-desktop/releases/download/v0.6.6/x64_en-US.msi">y</a>
+            <a href="/nottyjay/archer-harness-desktop/releases/download/v0.6.5/old.dmg">z</a>
         "#;
         let names = extract_asset_names(html, tag);
         assert_eq!(names, vec!["x64-setup.exe", "x64_en-US.msi"]);
