@@ -99,11 +99,25 @@ function hostTarget() {
   return `${os}-${arch}`
 }
 
+/**
+ * 内置 Node 发行版自带的 corepack 包目录：`pnpmInvocation` 用它找 corepack 入口，
+ * `runPnpm` 用它把 shim 目录放进子进程 PATH。发行版未附带 corepack 时返回 undefined。
+ */
+function corepackPackageDir(nodeRoot) {
+  const directory = process.platform === 'win32'
+    ? join(nodeRoot, 'node_modules', 'corepack')
+    : join(nodeRoot, 'lib', 'node_modules', 'corepack')
+  return existsSync(directory) ? directory : undefined
+}
+
 function pnpmInvocation(node, nodeRoot, args) {
-  const corepack = process.platform === 'win32'
-    ? join(nodeRoot, 'node_modules', 'corepack', 'dist', 'corepack.js')
-    : join(nodeRoot, 'lib', 'node_modules', 'corepack', 'dist', 'corepack.js')
-  if (existsSync(corepack)) return [node, [corepack, 'pnpm', ...args]]
+  const corepackDirectory = corepackPackageDir(nodeRoot)
+  const corepack = corepackDirectory === undefined
+    ? undefined
+    : join(corepackDirectory, 'dist', 'corepack.js')
+  if (corepack !== undefined && existsSync(corepack)) {
+    return [node, [corepack, 'pnpm', ...args]]
+  }
 
   const entrypoint = process.env.npm_execpath
   if (entrypoint && ['.js', '.cjs', '.mjs'].includes(extname(entrypoint).toLowerCase())) {
@@ -114,6 +128,15 @@ function pnpmInvocation(node, nodeRoot, args) {
 
 function runPnpm(node, nodeRoot, args) {
   const [command, commandArgs] = pnpmInvocation(node, nodeRoot, args)
+  // Harness 自己的脚本（`build:web` 等）还会再调一次 `pnpm`，而那一层只看 PATH。把内置 Node 的
+  // corepack shim 目录排在 PATH 最前，嵌套调用才会按项目 `packageManager`（Harness 根节点的
+  // `pnpm@11.7.0`）解析版本；否则它落到开发机全局 pnpm 上，只要那个版本比锁定值新，pnpm 的
+  // `packageManager` 校验就会以 ERR_PNPM_BAD_PM_VERSION 直接中断打包。
+  const corepackDirectory = corepackPackageDir(nodeRoot)
+  const shims = corepackDirectory === undefined ? undefined : join(corepackDirectory, 'shims')
+  const path = [shims, dirname(node), process.env.PATH]
+    .filter(entry => entry !== undefined && entry !== '')
+    .join(delimiter)
   run(command, commandArgs, {
     cwd: harnessRoot,
     env: {
@@ -127,7 +150,7 @@ function runPnpm(node, nodeRoot, args) {
       GIT_CEILING_DIRECTORIES: projectRoot,
       NODE: node,
       npm_node_execpath: node,
-      PATH: `${dirname(node)}${delimiter}${process.env.PATH ?? ''}`,
+      PATH: path,
     },
   })
 }
@@ -216,6 +239,16 @@ async function prepareHarness(destination, target, override) {
     runPnpm(hostNode, hostNodeRoot, ['install', '--frozen-lockfile'])
     runPnpm(hostNode, hostNodeRoot, ['run', 'build:native-system'])
     runPnpm(hostNode, hostNodeRoot, ['run', 'build:lib:host'])
+    // Client 半场的 tsc 工程（`tsconfig.client.json`）不在 `build:lib:host` 里：host 工程显式
+    // 排除了 `packages/client/*/src/**`，`lib/types/**`（Node 半场入口）与 `lib/types/client/**`
+    // 只由这一步产出。缺了它，下面的 client tsdown 会以
+    // `[UNRESOLVED_ENTRY] Cannot resolve entry module lib/types/index.js` 失败；并且并发调度的
+    // 先后不同，报错落在哪个包会漂移，看起来像偶发失败。只有先前跑过整套 Harness 构建（`lib/`
+    // 与其中的 `tsbuildinfo` 都在 .gitignore 内）的机器才碰巧带着这些产物，因此在 mac 上「正常」。
+    // `--noCheck`：这一步只要产物，不要类型结论。Client 聚合里的 `packages/client/*/tests/**`
+    // 存在既有的 React 类型不匹配（19 的 `ReactNode` 交给 18 的类型），带检查会以非零码中断打包；
+    // 上游 `build:lib:client` 在当前依赖解析下同样过不去，所以产物步骤跳过类型检查。
+    runPnpm(hostNode, hostNodeRoot, ['exec', 'tsc', '-b', 'tsconfig.client.json', '--noCheck'])
     runPnpm(hostNode, hostNodeRoot, ['exec', 'tsdown', '--env.DSH_BUILD_FACE', 'client'])
     runPnpm(hostNode, hostNodeRoot, ['run', 'build:web'])
     runPnpm(hostNode, hostNodeRoot, [
