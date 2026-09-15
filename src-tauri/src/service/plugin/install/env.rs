@@ -66,9 +66,10 @@ pub(crate) fn build_plugin_envs(
     // 用户的 pnpm 用户级/全局配置（如 `store-dir`）或环境变量可能把 store 指到别处
     // （典型场景：用户在另一个分区的工程里跑过 pnpm，pnpm 就把那份 store 写进了全局配置），
     // 此时档案安装必然失败且无法自愈。这里显式下传档案记录的 store：
-    // pnpm 的优先级是 CLI > 环境变量 > 项目 .npmrc > 用户/全局配置，
-    // 因此该值既压过用户配置，也必然等于 .modules.yaml 里的记录，子进程无从跑偏。
-    // 全新档案（没有 node_modules）不注入：让 pnpm 按用户配置自行决定并写回记录。
+    // 旧版 pnpm 可通过 npm_config_store_dir 覆盖用户配置；pnpm 11 的兼容性检查还
+    // 要求命令行的 --store-dir（由 install/mod.rs 与 single.rs 追加），因此这里保留
+    // 环境变量作为旧版兼容层。全新档案（没有 node_modules）不注入，让 pnpm 自行
+    // 决定并写回记录。
     if let Some(store_dir) = super::pnpm::profile_store_dir(app_handle) {
         log::info!("pinning plugin install pnpm store to the profile record: {store_dir}");
         envs.insert("npm_config_store_dir".to_string(), store_dir);

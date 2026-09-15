@@ -1,4 +1,3 @@
-#[cfg(windows)]
 use tauri::Manager;
 
 use crate::{desktop::payload::NativeNotificationPayload, utils::app_icon_temp_path};
@@ -49,6 +48,7 @@ pub(crate) const NOTIFICATION_SHIM_JS: &str = r#"(function () {
       tag: this.tag,
       requireInteraction: !!options.requireInteraction,
       sessionId: options.sessionId || sessionIdFromTag(this.tag),
+      icon: options.icon || options.image || null,
       href: location.href,
       origin: location.origin
     });
@@ -135,6 +135,10 @@ pub fn show_native_notification(
     payload: NativeNotificationPayload,
 ) -> Result<(), String> {
     use tauri_plugin_notification::NotificationExt;
+
+    if let Some(state) = app.try_state::<crate::desktop::tray::TrayIconState>() {
+        state.notify(&app, payload.avatar_png.clone());
+    }
 
     let mut builder = app
         .notification()

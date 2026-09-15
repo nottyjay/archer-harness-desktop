@@ -354,7 +354,7 @@ pub fn terminate_stale_harness_processes(app_handle: &tauri::AppHandle) {
     // 安装目录（核心共用），按命令行路径匹配会把同时运行的 release 服务进程
     // 一并结束——`pnpm tauri dev` 每次后端重编译都会重启应用并触发清扫，导致
     // "release 版 DSH 被 dev 版热更新杀掉"。开发构建自身的崩溃残留仍由
-    // `.harness.pid` 标记（位于独立数据目录 `.dsh.dev`，PID+端口双重确认）
+    // `.harness.pid` 标记（位于独立数据目录 `.archer.dev`，PID+端口双重确认）
     // 精确回收。
     if cfg!(debug_assertions) {
         return;
@@ -641,7 +641,7 @@ mod tests {
     /// 命令行匹配：argv 整词精确等于 dsh 入口路径才算本应用服务实例。
     #[test]
     fn harness_cmdline_matches_service_arguments() {
-        let bin = "/home/u/.dsh/dependencies/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js";
+        let bin = "/home/u/.archer/dependencies/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js";
         assert!(is_harness_command_line(
             &format!("node {bin} --profile web --port 3083"),
             bin
@@ -650,14 +650,14 @@ mod tests {
 
     #[test]
     fn harness_cmdline_matches_macos_app_data_path_with_spaces() {
-        let bin = "/Users/simon/Library/Application Support/io.github.hairyf.deepseek-harness-desktop/dependencies/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js";
+        let bin = "/Users/simon/Library/Application Support/com.d3code.archer-harness/dependencies/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js";
         let cmdline = format!("/opt/homebrew/bin/node {bin} --profile web --port 3084");
         assert!(is_harness_command_line(&cmdline, bin));
     }
 
     #[test]
     fn harness_cmdline_rejects_foreign_and_prefix_paths() {
-        let bin = "/home/u/.dsh/dependencies/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js";
+        let bin = "/home/u/.archer/dependencies/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js";
         // 用户其它 node 程序
         assert!(!is_harness_command_line(
             "node /usr/bin/some-server.js",
@@ -665,7 +665,7 @@ mod tests {
         ));
         // 路径前缀相似但不同（整词匹配，不做子串匹配）
         assert!(!is_harness_command_line(
-            "node /home/u/.dsh/dependencies/dsh-extra/tool.js",
+            "node /home/u/.archer/dependencies/dsh-extra/tool.js",
             bin
         ));
         // 完整路径只是另一参数的前缀时不能命中

@@ -24,7 +24,7 @@ DeepSeek Harness 的桌宠插件。它在设置页提供 `Pets` 与 `Codex` 两�
 
 ## 文件来源与技能
 
-Chat 宠物安装在 `${DSH_HOME:-$HOME/.dsh}/pets`，Codex 宠物安装在
+Chat 宠物安装在 `${DSH_HOME:-$HOME/.archer}/pets`，Codex 宠物安装在
 `$HOME/.codex/pets`，两个来源通过 `list_pets({ source: 'chat' | 'codex' })`
 严格分开。预设宠物清单（`src-tauri/resources/preset-pets.json`）只登记远端素材
 地址与渲染参数，本地不落任何预设产物。`skills/hatch-dsh-pet/SKILL.md`

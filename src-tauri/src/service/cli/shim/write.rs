@@ -126,7 +126,7 @@ pub fn write_shims(app_handle: &AppHandle, bin_dir: &Path) -> Result<(), String>
         }};
     }
 
-    // dsh shim 会在内容里烘焙 $DSH_HOME（生产为 ~/.dsh、开发为 ~/.dsh.dev）。
+    // dsh shim 会在内容里烘焙 $DSH_HOME（生产为 ~/.archer、开发为 ~/.archer.dev）。
     // 开发构建禁止改写用户共享的 dsh shim——改写会让终端 `dsh` 指向开发数据
     // 目录，并覆盖生产的命令行集成；生产版生成的 dsh shim 原样保留。
     #[cfg(not(debug_assertions))]

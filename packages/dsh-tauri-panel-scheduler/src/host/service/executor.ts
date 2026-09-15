@@ -266,11 +266,11 @@ export async function executeTask(
       workspace = resolved
     }
     else {
-      // 未分组任务 cwd：~/.dsh/automations。不注册工作区、不 attachSession——
+      // 未分组任务 cwd：~/.archer/automations。不注册工作区、不 attachSession——
       // 侧边栏「未分组」桶是客户端按「不在任何 workspace.sessionIds 里」计算的
       // stray 组（dsh-client-ui-workspace groupByWorkspace），无归属会话自动落入。
       const env = process.env.DSH_HOME
-      const home = env?.trim() ? env.trim() : join(homedir(), '.dsh')
+      const home = env?.trim() ? env.trim() : join(homedir(), '.archer')
       cwd = join(home, 'automations')
       await mkdir(cwd, { recursive: true }).catch(() => {})
     }

@@ -10,7 +10,7 @@
  *                         特性组件），经 /api/dsh-worktree/* 与本 half 通信。
  *
  * 职责：
- *   1. 根据「项目路径 + 会话 ID」计算唯一 hash，在 `~/.dsh/worktrees/[hash]/[dirname]`
+ *   1. 根据「项目路径 + 会话 ID」计算唯一 hash，在 `~/.archer/worktrees/[hash]/[dirname]`
  *      用 `git worktree add --detach` 创建隔离工作树；
  *   2. 维护 per-session 绑定（WeakMap 活对象 + 磁盘 ledger 持久化）；
  *   3. 注册 `create_worktree` / `checkout_worktree` / `discard_worktree` 工具（Agent 自发调用）；

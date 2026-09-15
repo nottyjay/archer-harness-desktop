@@ -41,7 +41,7 @@ const STATE_KEY = 'state.json'
 
 /** skills 功能目录的绝对路径（material 落盘与只读判定用，与 storage base 一致）。 */
 export function skillsRootDir(): string {
-  return join(process.env.DSH_HOME ?? join(homedir(), '.dsh'), 'skills')
+  return join(process.env.DSH_HOME ?? join(homedir(), '.archer'), 'skills')
 }
 
 /** 读取全部注册的自定义技能仓库。 */

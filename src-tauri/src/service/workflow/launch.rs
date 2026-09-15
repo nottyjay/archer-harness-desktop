@@ -348,7 +348,7 @@ pub async fn launch(app_handle: tauri::AppHandle) -> Result<(), String> {
 
     // 构造环境变量：隔离的 $DSH_HOME + 隐私默认（关闭遥测）
     //
-    // 建目录 + 可写性预检（issue #466）：`~/.dsh` 属主不是当前用户时（典型：此前
+    // 建目录 + 可写性预检（issue #466）：`~/.archer` 属主不是当前用户时（典型：此前
     // 用 sudo 运行过 dsh，macOS 的 sudo 保留 $HOME），读得到、写不了——dsh 起来后
     // 必然崩在写 cordis.yml/settings.yaml 上，前端只能看到
     // 「Harness exited early: exit status: 1」，完全不可行动。这里提前阻断并给出

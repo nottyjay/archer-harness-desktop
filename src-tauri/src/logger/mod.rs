@@ -17,7 +17,7 @@ use tracing_subscriber::filter::filter_fn;
 use tracing_subscriber::fmt::time::OffsetTime;
 use tracing_subscriber::layer::{Layer, SubscriberExt};
 use tracing_subscriber::{fmt, util::SubscriberInitExt, EnvFilter};
-const APP_IDENTIFIER: &str = "io.github.hairyf.deepseek-harness-desktop";
+const APP_IDENTIFIER: &str = "com.d3code.archer-harness";
 const LOG_FILE_NAME: &str = "desktop.log";
 const FRONTDESK_LOG_FILE_NAME: &str = "desktop.frontdesk.log";
 const MAX_LOG_BYTES: u64 = 5 * 1024 * 1024;

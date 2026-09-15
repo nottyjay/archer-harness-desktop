@@ -21,3 +21,6 @@ skills
 source/
 .gitmodules
 .tmp-alpha-inspect
+.wolf/
+RTK.md
+Agents.md

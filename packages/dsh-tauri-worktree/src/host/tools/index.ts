@@ -24,7 +24,7 @@ export function createToolSet(
   config: PluginConfig,
   pendingHandoffs: Map<string, PendingHandoff> = new Map(),
 ): any[] {
-  const worktreesRoot = config.worktreesRoot || join(homedir(), '.dsh')
+  const worktreesRoot = config.worktreesRoot || join(homedir(), '.archer')
 
   return [
     {

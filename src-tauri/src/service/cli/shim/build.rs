@@ -19,7 +19,7 @@ use super::templates::{
 // ---------------------------------------------------------------------------
 
 /// Windows `dsh.cmd` 内容。`app_dir` 为应用数据目录（绝对路径，生成时写死），
-/// `dsh_home` 为官方 `$DSH_HOME`（release 为 `~/.dsh`，生成时写死，与桌面端/
+/// `dsh_home` 为 Archer `$DSH_HOME`（release 为 `~/.archer`，生成时写死，与桌面端/
 /// 官方一致）。
 #[cfg_attr(debug_assertions, allow(dead_code))] // 仅 release 构建写入 dsh shim
 pub fn build_cmd_shim(app_dir: &Path, dsh_home: &Path) -> String {
@@ -351,7 +351,7 @@ mod tests {
         let content = build_cmd_shim(&sample_app_dir(), &sample_dsh_home());
         assert!(content.contains(r"C:\Users\test\AppData\Roaming"));
         assert!(content.contains("dependencies/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js"));
-        assert!(content.contains(r"C:\Users\test\.dsh"));
+        assert!(content.contains(r"C:\Users\test\.archer"));
         assert!(!content.contains("data/dsh"));
         assert!(content.contains("%*"));
     }
@@ -359,7 +359,7 @@ mod tests {
     #[test]
     fn cmd_shim_escapes_percent() {
         let dir = PathBuf::from(
-            r"C:\Users\100%test\AppData\Roaming\io.github.hairyf.deepseek-harness-desktop",
+            r"C:\Users\100%test\AppData\Roaming\com.d3code.archer-harness",
         );
         let content = build_cmd_shim(&dir, &sample_dsh_home());
         assert!(content.contains("100%%test"));
@@ -816,12 +816,12 @@ mod tests {
     #[test]
     fn ps1_shim_escapes_quotes() {
         let dir = PathBuf::from(
-            r"C:\Users\o'brien\AppData\Roaming\io.github.hairyf.deepseek-harness-desktop",
+            r"C:\Users\o'brien\AppData\Roaming\com.d3code.archer-harness",
         );
         let content = build_ps1_shim(&dir, &sample_dsh_home());
         assert!(content.contains(r"o''brien"));
         // dsh_home 同样走 ps1 转义
-        assert!(content.contains(r"C:\Users\test\.dsh"));
+        assert!(content.contains(r"C:\Users\test\.archer"));
     }
 
     #[test]

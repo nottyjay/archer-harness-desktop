@@ -629,8 +629,9 @@ pub(crate) fn profile_store_major(app_handle: &AppHandle) -> Option<u32> {
 /// `node_modules/.modules.yaml` 记录的一致时才继续安装，否则 `ERR_PNPM_UNEXPECTED_STORE`。
 /// 用户的 pnpm 用户级/全局配置（或 `npm_config_store_dir` 环境变量）可能把 store 指到
 /// 别处，而档案早已按自己那份 store 装好——此时任何 `dsh plugin` 安装/升级都会失败，
-/// 与插件本身无关。把这个值下传给子进程（见 [`super::env::build_plugin_envs`]）即可
-/// 保证子进程用的必然是与档案一致的那份 store。
+/// 与插件本身无关。这个值会同时进入旧版 pnpm 的环境兼容层（见
+/// [`super::env::build_plugin_envs`]）和 pnpm 11 所需的 `--store-dir` CLI 参数，保证
+/// 子进程使用的必然是与档案一致的那份 store。
 ///
 /// pnpm 对末尾的版本段是幂等的（传 `...\store\v10` 与传 `...\store` 解析结果相同），
 /// 因此这里原样返回、不做剥离。
@@ -650,9 +651,20 @@ fn read_modules_yaml(app_handle: &AppHandle) -> Option<String> {
 
 /// 从 `.modules.yaml` 文本解析 `storeDir`（纯函数，便于单测）。
 ///
-/// 兼容 pnpm 的两种写法：未加引号的裸路径（Windows 反斜杠、Unix 正斜杠），以及
-/// 含特殊字符时 YAML 双引号包裹 + `\\` 转义的形式。
+/// pnpm 的文件名虽然是 `.yaml`，实际发行版本会写出 JSON 形态的对象；旧版本与
+/// 某些配置仍可能写成 YAML。优先通过 YAML 解析器读取两种结构化格式，失败时再
+/// 保留对裸 Windows 路径的兼容处理。
 fn parse_store_dir_from_modules_yaml(content: &str) -> Option<String> {
+    if let Ok(document) = serde_yaml::from_str::<serde_yaml::Value>(content) {
+        if let Some(store_dir) = document.get("storeDir").and_then(serde_yaml::Value::as_str) {
+            let store_dir = store_dir.trim();
+            if !store_dir.is_empty() {
+                return Some(store_dir.to_string());
+            }
+        }
+    }
+
+    // 兼容无法被 YAML 标量解析的裸 Windows 路径（例如 `C:\\Users\\...`）。
     let raw = content
         .lines()
         .find_map(|line| line.trim().strip_prefix("storeDir:").map(str::trim))?
@@ -946,6 +958,20 @@ virtualStoreDir: node_modules/.pnpm
     }
 
     #[test]
+    fn store_dir_supports_pnpm_json_modules_file() {
+        let content = r#"{
+  "layoutVersion": 5,
+  "storeDir": "/Users/test/Library/pnpm/store/v11",
+  "virtualStoreDir": ".pnpm"
+}"#;
+        assert_eq!(
+            parse_store_dir_from_modules_yaml(content).as_deref(),
+            Some("/Users/test/Library/pnpm/store/v11")
+        );
+        assert_eq!(parse_store_major_from_modules_yaml(content), Some(11));
+    }
+
+    #[test]
     fn store_major_missing_when_no_store_dir() {
         // 档案尚未装过依赖：无 storeDir 段 → None
         assert_eq!(
@@ -962,7 +988,7 @@ virtualStoreDir: node_modules/.pnpm
 
     #[test]
     fn store_dir_parsed_for_handoff_to_pnpm() {
-        // 下传给 `npm_config_store_dir` 的必须是完整路径（含 v10 版本段，pnpm 对该段幂等）
+        // 下传给 pnpm CLI 的必须是完整路径（含 v10 版本段，pnpm 对该段幂等）
         let content = "\
 hoistPattern:
   - '*'

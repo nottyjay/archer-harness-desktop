@@ -4,7 +4,7 @@
     <CustomAction
       Id="RemoveAutostartRunValue"
       Directory="SystemFolder"
-      ExeCommand="reg.exe delete &quot;HKCU\Software\Microsoft\Windows\CurrentVersion\Run&quot; /v &quot;Deepseek Harness Desktop&quot; /f"
+      ExeCommand="reg.exe delete &quot;HKCU\Software\Microsoft\Windows\CurrentVersion\Run&quot; /v &quot;Archer&quot; /f"
       Execute="immediate"
       Impersonate="yes"
       Return="ignore"
@@ -12,7 +12,7 @@
     <CustomAction
       Id="RemoveAutostartApprovalValue"
       Directory="SystemFolder"
-      ExeCommand="reg.exe delete &quot;HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run&quot; /v &quot;Deepseek Harness Desktop&quot; /f"
+      ExeCommand="reg.exe delete &quot;HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run&quot; /v &quot;Archer&quot; /f"
       Execute="immediate"
       Impersonate="yes"
       Return="ignore"

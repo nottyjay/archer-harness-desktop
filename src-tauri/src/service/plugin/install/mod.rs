@@ -67,7 +67,8 @@ mod spec;
 // 子模块对外 API：plugin 兄弟模块（verify / internal 等）与安装编排共用
 pub(crate) use env::build_plugin_envs;
 pub(crate) use pnpm::{
-    bundled_pnpm_major, harness_prefer_bundled_pnpm, pnpm_major_version_at, profile_store_major,
+    bundled_pnpm_major, harness_prefer_bundled_pnpm, pnpm_major_version_at, profile_store_dir,
+    profile_store_major,
 };
 pub(crate) use single::uninstall_deprecated_plugins;
 pub use single::{remove, update};
@@ -250,6 +251,13 @@ async fn install_with_cancel(
         OsString::from(active_profile(app_handle)),
         OsString::from("add"),
     ];
+    // pnpm 11 只可靠接受 CLI 的 --store-dir 来覆盖它解析出的默认 store；
+    // .modules.yaml 的记录是 profile 已有 node_modules 的事实来源。环境变量仍在
+    // build_plugin_envs 中保留给旧版 pnpm，但这里必须把参数直接转发给 dsh。
+    if let Some(store_dir) = profile_store_dir(app_handle) {
+        log::info!("pinning plugin install pnpm store via CLI: {store_dir}");
+        args.push(OsString::from(format!("--store-dir={store_dir}")));
+    }
     args.extend(specs.iter().map(|s| OsString::from(s.as_str())));
 
     let cwd = config::get_dsh_install_path(app_handle);

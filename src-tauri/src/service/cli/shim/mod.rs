@@ -56,19 +56,19 @@ mod test_util {
     pub(super) fn sample_app_dir() -> PathBuf {
         if cfg!(windows) {
             PathBuf::from(
-                r"C:\Users\test\AppData\Roaming\io.github.hairyf.deepseek-harness-desktop",
+                r"C:\Users\test\AppData\Roaming\com.d3code.archer-harness",
             )
         } else {
-            PathBuf::from("/home/test/.local/share/io.github.hairyf.deepseek-harness-desktop")
+            PathBuf::from("/home/test/.local/share/com.d3code.archer-harness")
         }
     }
 
-    /// 官方 $DSH_HOME（~/.dsh）
+    /// Archer $DSH_HOME（~/.archer）
     pub(super) fn sample_dsh_home() -> PathBuf {
         if cfg!(windows) {
-            PathBuf::from(r"C:\Users\test\.dsh")
+            PathBuf::from(r"C:\Users\test\.archer")
         } else {
-            PathBuf::from("/home/test/.dsh")
+            PathBuf::from("/home/test/.archer")
         }
     }
 

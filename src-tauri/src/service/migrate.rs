@@ -1,8 +1,8 @@
-//! 用户数据目录迁移：旧版 AppData `data/dsh` → 官方 `$DSH_HOME`（`~/.dsh`）。
+//! 用户数据目录迁移：旧版 AppData `data/dsh` → Archer `$DSH_HOME`（`~/.archer`）。
 //!
 //! 早期桌面版把 `$DSH_HOME` 隔离在应用数据目录
-//! （`%APPDATA%/io.github.hairyf.deepseek-harness-desktop/data/dsh`），与官方
-//! node 安装（`${DSH_HOME:-$HOME/.dsh}`）不一致，两边数据互不相通。本模块在
+//! （`%APPDATA%/com.d3code.archer-harness/data/dsh`），与 Archer
+//! node 安装（`${DSH_HOME:-$HOME/.archer}`）不一致，两边数据互不相通。本模块在
 //! 启动早期把旧数据迁移到官方 `$DSH_HOME`，之后桌面版与官方安装共用同一份数据。
 //!
 //! 迁移规则：
@@ -37,8 +37,8 @@ fn legacy_dsh_home(app_handle: &AppHandle) -> PathBuf {
 /// 失败返回 Err（不删除旧数据），由调用方决定是否阻断——本应用选择仅告警。
 pub fn migrate(app_handle: &AppHandle) -> Result<(), String> {
     // 开发（debug）构建不执行旧数据迁移：旧版 AppData `data/dsh` 是生产的
-    // 数据（release 尚未完成迁移时会把它整目录搬进开发版的 `.dsh.dev`，
-    // 导致 release 丢失数据）。开发构建的数据目录从一开始就是独立的 `.dsh.dev`。
+    // 数据（release 尚未完成迁移时会把它整目录搬进开发版的 `.archer.dev`，
+    // 导致 release 丢失数据）。开发构建的数据目录从一开始就是独立的 `.archer.dev`。
     if cfg!(debug_assertions) {
         log::debug!("skipping legacy data migration in debug build (data belongs to release)");
         return Ok(());

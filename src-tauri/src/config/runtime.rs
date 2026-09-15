@@ -420,7 +420,7 @@ pub fn get_dsh_package_json_path<R: Runtime>(app_handle: &AppHandle<R>) -> PathB
 
 /// 用户主目录（Windows 取 `%USERPROFILE%`，Unix 取 `$HOME`）。
 ///
-/// 不使用 dirs crate（未引入该依赖），与官方 dsh 的 `$HOME/.dsh` 语义保持一致。
+/// 不使用 dirs crate（未引入该依赖），与 Archer 的 `$HOME/.archer` 语义保持一致。
 fn user_home_dir() -> Option<PathBuf> {
     #[cfg(windows)]
     let key = "USERPROFILE";
@@ -431,11 +431,11 @@ fn user_home_dir() -> Option<PathBuf> {
 
 /// Harness 用户数据目录（$DSH_HOME）。
 ///
-/// 与官方 dsh（`${DSH_HOME:-$HOME/.dsh}`）保持一致：
-/// - release 构建使用非空环境变量 `DSH_HOME`，否则默认 `~/.dsh`；
-/// - debug 构建始终使用 `~/.dsh.dev`，忽略从旧 desktop checkout、终端或 release
+/// 与 Archer（`${DSH_HOME:-$HOME/.archer}`）保持一致：
+/// - release 构建使用非空环境变量 `DSH_HOME`，否则默认 `~/.archer`；
+/// - debug 构建始终使用 `~/.archer.dev`，忽略从旧 desktop checkout、终端或 release
 ///   shim 继承的 `DSH_HOME`，避免两个构建误用同一 profile 并发改写；
-/// - debug 子进程由 launch 显式收到同一个 `~/.dsh.dev`，开发版与生产版的会话、档案、
+/// - debug 子进程由 launch 显式收到同一个 `~/.archer.dev`，开发版与生产版的会话、档案、
 ///   插件与主题因此互不干扰。
 pub fn get_dsh_data_path<R: Runtime>(_app_handle: &AppHandle<R>) -> PathBuf {
     let dir_name = if cfg!(debug_assertions) {
@@ -563,8 +563,8 @@ pub fn runtime_info<R: Runtime>(app: &AppHandle<R>, port: u16) -> RuntimeInfo {
         dsh_version: get_dsh_version(app),
         node_version: get_active_node_version(),
         service_url: get_dsh_service_url(port),
-        // 用户数据所在目录 = $DSH_HOME（release 为官方 ~/.dsh，debug 为独立
-        // ~/.dsh.dev，见 get_dsh_data_path），不再是 AppData
+        // 用户数据所在目录 = $DSH_HOME（release 为 ~/.archer，debug 为独立
+        // ~/.archer.dev，见 get_dsh_data_path），不再是 AppData
         data_dir: get_dsh_data_path(app).to_string_lossy().into_owned(),
         log_path: get_service_log_path(app).to_string_lossy().into_owned(),
         platform: env::consts::OS.to_string(),

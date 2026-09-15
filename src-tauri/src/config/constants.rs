@@ -42,13 +42,12 @@ pub const DSH_PORT: u16 = 3080;
 /// 争用同一个 3080 端口冲突。
 pub const DSH_DEV_PORT: u16 = 3081;
 
-/// 官方 Harness 用户数据目录名：release 构建的 `$DSH_HOME` 默认目录（`~/.dsh`，
-/// 与官方 node 安装保持一致）。
-pub const DSH_HOME_DIR_NAME: &str = ".dsh";
-/// 开发（debug）构建的用户数据目录名（`~/.dsh.dev`）：与生产数据目录隔离。
+/// Archer 用户数据目录名：release 构建的 `$DSH_HOME` 默认目录（`~/.archer`）。
+pub const DSH_HOME_DIR_NAME: &str = ".archer";
+/// 开发（debug）构建的用户数据目录名（`~/.archer.dev`）：与生产数据目录隔离。
 /// 会话、档案、插件与主题等数据各自独立——`pnpm tauri dev` 与已安装桌面端
 /// 同时运行时互不干扰，也不会互相污染对方的会话数据。
-pub const DSH_HOME_DEV_DIR_NAME: &str = ".dsh.dev";
+pub const DSH_HOME_DEV_DIR_NAME: &str = ".archer.dev";
 
 /// 开发构建在 AppData 下使用的独立子目录。Node、Harness、pnpm、Git 等可执行
 /// 核心不应与 release 共用，否则开发版更新/切换核心会替换正在运行的生产文件。
@@ -71,7 +70,7 @@ pub const MINGIT_CORE_DIR: &str = "git";
 pub const MINGIT_ENTRY_RELATIVE: &str = "cmd/git.exe";
 
 /// 旧版数据目录名：迁移前 $DSH_HOME 位于 `{app_data}/data/dsh`，
-/// 现仅用于 legacy 路径识别（见 service::migrate）。新 $DSH_HOME = 官方 `~/.dsh`。
+/// 现仅用于 legacy 路径识别（见 service::migrate）。新 $DSH_HOME = Archer `~/.archer`。
 pub const DSH_DATA_DIR_NAME: &str = "dsh";
 
 /// 简单 Store 持久化

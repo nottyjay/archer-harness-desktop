@@ -1,7 +1,7 @@
 //! `$DSH_HOME` / 档案目录的可写性预检与权限诊断。
 //!
-//! 背景（issue #466）：`~/.dsh` 可能整棵子树的属主不是当前用户——最常见的原因是
-//! 此前用 `sudo` 运行过 dsh（macOS 的 `sudo` 保留 `$HOME`，`~/.dsh` 因此被 root
+//! 背景（issue #466）：`~/.archer` 可能整棵子树的属主不是当前用户——最常见的原因是
+//! 此前用 `sudo` 运行过 dsh（macOS 的 `sudo` 保留 `$HOME`，`~/.archer` 因此被 root
 //! 创建）。此时应用**能读、能遍历**（`profiles/web/package.json` 读得到），但任何
 //! 写入都以 `EACCES (os error 13)` 失败：`.npmrc`、`cordis.yml`、内置插件链接、
 //! 安全档案目录全部写不进去。用户最终只看到裸 `os error 13` 与一个「安全模式」
@@ -164,7 +164,7 @@ fn shell_quote(path: &Path) -> String {
 fn remedy_hint(root: &Path) -> String {
     format!(
         "请在终端执行 `sudo chown -R \"$(id -u):$(id -g)\" {}` 后重试——该状态通常由此前\
-         用 sudo 运行过 dsh 造成（macOS 的 sudo 保留 $HOME，`~/.dsh` 会被 root 创建）。",
+         用 sudo 运行过 dsh 造成（macOS 的 sudo 保留 $HOME，`~/.archer` 会被 root 创建）。",
         shell_quote(root)
     )
 }

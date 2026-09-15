@@ -17,6 +17,7 @@ import { useInvokeIframe } from '@/hooks/use-invoke-iframe'
 import { useListen } from '@/hooks/use-listen'
 import { useZoomFactor } from '@/hooks/use-zoom-factor'
 import { store } from '@/store'
+import { renderAvatarPngBytes } from '@/utils/avatar-render'
 import { nextZoomFactor, zoomActionFromBridgeMessage, zoomActionFromShortcut } from '@/utils/zoom'
 import { Loadable } from './loadable'
 
@@ -36,6 +37,7 @@ interface IframeBridgeMessage {
   tag?: string
   sessionId?: string | null
   requireInteraction?: boolean
+  icon?: string | null
   /** 插件异常桥 / 剪贴板图片桥：插件 id 或剪贴板请求 id */
   id?: string
   error?: string
@@ -91,6 +93,20 @@ export function Iframe({ iframeRef }: IframeProps) {
     store.setting.zoom_factor = nextZoomFactor(zoomFactor, action)
   }
 
+  async function showNativeNotification(data: IframeBridgeMessage) {
+    const avatarPng = data.icon ? await renderAvatarPngBytes(data.icon) : null
+    await invoke('show_native_notification', {
+      payload: {
+        title: data.title ?? '',
+        body: data.body ?? '',
+        tag: data.tag ?? null,
+        sessionId: data.sessionId ?? null,
+        requireInteraction: Boolean(data.requireInteraction),
+        avatarPng,
+      },
+    })
+  }
+
   /** 壳层快捷键（焦点在导航栏等壳层元素时；iframe 内由注入脚本经缩放桥转发） */
   function handleZoomKeyDown(event: KeyboardEvent) {
     const action = zoomActionFromShortcut(event)
@@ -107,15 +123,7 @@ export function Iframe({ iframeRef }: IframeProps) {
     switch (data.type) {
       // 原生通知：转发给 Tauri 命令弹出系统通知
       case 'dsh://native-notification':
-        void invoke('show_native_notification', {
-          payload: {
-            title: data.title ?? '',
-            body: data.body ?? '',
-            tag: data.tag ?? null,
-            sessionId: data.sessionId ?? null,
-            requireInteraction: Boolean(data.requireInteraction),
-          },
-        }).catch(error => console.error('[notification] show_native_notification failed:', error))
+        void showNativeNotification(data).catch(error => console.error('[notification] show_native_notification failed:', error))
         break
 
       // 插件异常上报：写后端错误注册表，并刷新插件列表（「插件」面板据此展示 danger 与修复入口）
@@ -199,7 +207,10 @@ export function Iframe({ iframeRef }: IframeProps) {
           appWindow.isMinimized(),
           appWindow.isVisible(),
         ])
-        post({ type: 'dsh://visibility-state', hidden: minimized || !visible })
+        const hidden = minimized || !visible
+        post({ type: 'dsh://visibility-state', hidden })
+        if (!hidden)
+          await invoke('clear_tray_notifications').catch(error => console.error('[notification] clear tray failed:', error))
       }
       catch (error) {
         console.error('[notification] sync visibility failed:', error)

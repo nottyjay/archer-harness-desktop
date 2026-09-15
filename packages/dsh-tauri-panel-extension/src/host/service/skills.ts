@@ -25,7 +25,7 @@ export interface SkillInput {
 
 /** The user-owned skill root this plugin writes into (provider rank 400). */
 export function userSkillsDir(dshHome: string | undefined = process.env.DSH_HOME): string {
-  return join(dshHome ?? join(homedir(), '.dsh'), 'skills')
+  return join(dshHome ?? join(homedir(), '.archer'), 'skills')
 }
 
 /** YAML double-quoted scalar (JSON string syntax is valid YAML 1.2). */

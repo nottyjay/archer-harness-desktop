@@ -22,9 +22,9 @@ const STARTUP_APPROVED_REGISTRY_KEY: &str =
 /// 返回系统启动项名称；开发版独立命名，避免覆盖正式版的可执行文件路径。
 pub fn app_name() -> &'static str {
     if cfg!(debug_assertions) {
-        "Deepseek Harness Desktop Dev"
+        "Archer Dev"
     } else {
-        "Deepseek Harness Desktop"
+        "Archer"
     }
 }
 
@@ -129,7 +129,7 @@ mod tests {
     #[cfg(windows)]
     use winreg::{RegKey, RegValue};
 
-    const TEST_APP_NAME: &str = "Deepseek Harness Desktop Autostart Test";
+    const TEST_APP_NAME: &str = "Archer Autostart Test";
     const SYSTEM_TEST_ENV: &str = "DSH_RUN_AUTOSTART_TESTS";
     #[cfg(windows)]
     const STARTUP_APPROVED_ENABLED_VALUE: [u8; 12] = [

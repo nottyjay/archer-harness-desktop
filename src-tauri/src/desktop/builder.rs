@@ -50,7 +50,7 @@ pub fn setup(app_handle: tauri::AppHandle) {
     // workflow::sweep_orphan_harness），避免新实例一路漂移端口
     crate::service::workflow::sweep_orphan_harness(&app_handle);
 
-    // 旧版 AppData data/dsh → 官方 $DSH_HOME（~/.dsh）数据迁移。
+    // 旧版 AppData data/dsh → Archer $DSH_HOME（~/.archer）数据迁移。
     // 必须在 sweep 之后（先杀掉占用文件句柄的残留 dsh 进程）、scheduler/
     // auto_start 之前（迁移完成前不启动 dsh）。失败仅告警不阻断：旧数据
     // 原地保留，下次启动重试。
@@ -106,14 +106,9 @@ pub fn setup(app_handle: tauri::AppHandle) {
 
 /// setup tray
 pub fn tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
-    // 平台差异的托盘图标策略：
-    // - macOS：使用 scoped template 透明图标（NSImage template），由系统按菜单栏
-    //   深浅/半透明材质自动着色，呈现与系统一致的半透明玻璃观感，而非彩色方块。
-    // - 其他平台：沿用默认窗口图标。
-    #[cfg(target_os = "macos")]
-    let icon = tauri::image::Image::from_bytes(include_bytes!("../../icons/macos-tray.png"))?;
-    #[cfg(not(target_os = "macos"))]
-    let icon = app.default_window_icon().unwrap().clone();
+    // 常驻图标使用带实心背景的普通 RGBA 图，不使用 macOS template 语义。
+    // 这避免菜单栏把高透明前景再次按系统材质处理后变得几乎不可见。
+    let icon = crate::desktop::tray::initial_icon(app);
 
     // 构建菜单
     let menu = Menu::with_items(
@@ -144,25 +139,13 @@ pub fn tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
         }
     }
 
-    // 构建托盘图标。macOS 上把模板图标记为 NSImage template，由系统按菜单栏
-    // 深浅/半透明材质自动着色，呈现与系统一致的半透明玻璃观感。
-    #[cfg(target_os = "macos")]
-    let _ = TrayIconBuilder::new()
+    // 固定托盘 ID，供通知状态机更新图标。
+    let _ = TrayIconBuilder::with_id(crate::desktop::tray::TRAY_ICON_ID)
         .icon(icon)
-        .icon_as_template(true)
+        .icon_as_template(false)
         .menu(&menu)
         .show_menu_on_left_click(false)
-        .tooltip("Deepseek Harness Desktop")
-        .on_menu_event(move |app, event| handle_menu_event(app, &event))
-        .on_tray_icon_event(move |tray, event| handle_tray_icon_event(tray, &event))
-        .build(app)?;
-
-    #[cfg(not(target_os = "macos"))]
-    let _ = TrayIconBuilder::new()
-        .icon(icon)
-        .menu(&menu)
-        .show_menu_on_left_click(false)
-        .tooltip("Deepseek Harness Desktop")
+        .tooltip("Archer")
         .on_menu_event(move |app, event| handle_menu_event(app, &event))
         .on_tray_icon_event(move |tray, event| handle_tray_icon_event(tray, &event))
         .build(app)?;
@@ -357,7 +340,7 @@ pub fn build_main_window(app: &tauri::AppHandle<Wry>) -> tauri::Result<tauri::We
 
     let webview_builder =
         WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-            .title("Deepseek Harness Desktop")
+            .title("Archer")
             .inner_size(1280.0, 840.0)
             .min_inner_size(860.0, 620.0)
             .resizable(true);
@@ -630,6 +613,7 @@ pub fn handler() -> impl Fn(Invoke<Wry>) -> bool + Send + Sync + 'static {
         crate::bridge::read_clipboard_image,
         crate::bridge::write_clipboard_text,
         crate::desktop::notification::show_native_notification,
+        crate::desktop::tray::clear_tray_notifications,
         crate::bridge::log_frontend,
         crate::bridge::get_pet_status,
         crate::bridge::set_pet_enabled,
@@ -652,6 +636,7 @@ pub fn builder() -> tauri::Builder<tauri::Wry> {
         .manage(crate::desktop::pet_mouse::PetMouseStreamState::default())
         .setup(|app| {
             let app_handle = app.handle().clone();
+            app.manage(crate::desktop::tray::TrayIconState::new(&app_handle));
             // 首装检测必须最先执行：窗口几何恢复/退出保存等任何 store 写入都会
             // 创建 store 文件，判定晚于它们会把首装误判为升级（见
             // config::detect_first_install 的时序说明）。

@@ -234,5 +234,5 @@ export async function markTurnExpired(dshHome: string, sessionId: string, turn: 
 
 /** 宿主数据根目录（`$DSH_HOME`，与 dsh-tauri 存储口径一致）。 */
 export function currentDshHome(): string {
-  return process.env.DSH_HOME ?? join(homedir(), '.dsh')
+  return process.env.DSH_HOME ?? join(homedir(), '.archer')
 }

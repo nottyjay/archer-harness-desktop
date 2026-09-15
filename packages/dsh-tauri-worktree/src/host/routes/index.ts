@@ -34,7 +34,7 @@ const DISCARD_RETRY_DELAY_MS = 2_000
 const DISCARD_JOB_RETENTION = 64
 
 export function buildRoutes(ctx: HostContext, config: PluginConfig): any[] {
-  const worktreesRoot = config.worktreesRoot || join(homedir(), '.dsh')
+  const worktreesRoot = config.worktreesRoot || join(homedir(), '.archer')
   const discardJobs = new Map<string, DiscardJob>()
   const discardInFlight = new Map<string, Promise<DiscardJob>>()
 

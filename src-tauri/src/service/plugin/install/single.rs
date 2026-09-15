@@ -24,7 +24,7 @@ use super::is_installed;
 use super::load_deprecated_ids;
 use super::load_presets;
 use super::new_process_owner;
-use super::pnpm::ensure_pnpm;
+use super::pnpm::{ensure_pnpm, profile_store_dir};
 use super::profile_dir;
 use super::run_plugin_with_allow_build_retry;
 use super::uninstall_recovery;
@@ -276,6 +276,12 @@ async fn run_single_plugin_command(
         OsString::from(active_profile(app_handle)),
         OsString::from(action),
     ];
+    // 与批量安装保持一致：pnpm 11 的 store 兼容性检查只接受 CLI 的
+    // --store-dir，不能只依赖 npm_config_store_dir。
+    if let Some(store_dir) = profile_store_dir(app_handle) {
+        log::info!("pinning plugin {action} pnpm store via CLI: {store_dir}");
+        args.push(OsString::from(format!("--store-dir={store_dir}")));
+    }
     args.extend(sub_args.iter().map(OsString::from));
 
     let cwd = config::get_dsh_install_path(app_handle);

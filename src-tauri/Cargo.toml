@@ -1,8 +1,8 @@
 [package]
-name = "deepseek-harness-desktop"
+name = "archer"
 version = "0.14.1"
 description = "Desktop application for DeepSeek Harness (dsh)"
-authors = [ "deepseek-harness-desktop contributors" ]
+authors = [ "Archer contributors" ]
 edition = "2021"
 
 [lib]

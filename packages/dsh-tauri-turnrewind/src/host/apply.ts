@@ -21,7 +21,7 @@ import { sessionCwdOf } from './service/workspace'
 
 /** 插件行配置（当前只有测试/调试用的数据目录覆盖）。 */
 export interface PluginConfig {
-  /** 覆盖宿主数据根目录（`$DSH_HOME`）；缺省走环境变量或 `~/.dsh`。 */
+  /** 覆盖宿主数据根目录（`$DSH_HOME`）；缺省走环境变量或 `~/.archer`。 */
   dshHome?: string
 }
 

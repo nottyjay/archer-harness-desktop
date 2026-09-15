@@ -10,7 +10,7 @@
  *                         manager CRUD / options 选项）/ tools（agent 工具）。
  *
  * 职责：
- *   1. 存储定时任务定义与执行记录（~/.dsh/dsh-tauri-panel-scheduler/）；
+ *   1. 存储定时任务定义与执行记录（~/.archer/dsh-tauri-panel-scheduler/）；
  *   2. 自建调度引擎（宿主即 Node，setInterval 节拍）按计划触发到期任务；
  *   3. 每次执行创建独立 Agent 会话 + followup 任务指令（无人值守）；
  *   4. 注册 scheduler_create/list/toggle/delete/run_now 工具（通过 Chat 创建）；

@@ -143,7 +143,7 @@ export function registerSkillRoutes(
 
   // Explicit rescan: remounting the host-plane provider re-runs discovery
   // over every root (packaged, registered repositories, ~/.claude|.codex,
-  // and the provider's own default roots like ~/.dsh/skills and
+  // and the provider's own default roots like ~/.archer/skills and
   // ~/.agents/skills). The remount invalidates the registry's collect cache,
   // so the list that follows reflects newly added skills without a restart.
   disposers.push(register({

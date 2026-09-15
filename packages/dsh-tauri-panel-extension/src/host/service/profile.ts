@@ -12,8 +12,8 @@ export function argvProfile(argv: readonly string[] = process.argv): string | un
   return undefined
 }
 
-/** Directory of a profile under DSH_HOME (default `~/.dsh`). */
+/** Directory of a profile under DSH_HOME (default `~/.archer`). */
 export function profileDir(profile: string, dshHome: string | undefined = process.env.DSH_HOME): string {
-  const home = dshHome ?? join(homedir(), '.dsh')
+  const home = dshHome ?? join(homedir(), '.archer')
   return join(home, 'profiles', profile)
 }

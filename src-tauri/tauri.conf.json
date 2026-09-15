@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Deepseek Harness Desktop",
+  "productName": "Archer",
   "version": "0.14.1",
-  "identifier": "io.github.hairyf.deepseek-harness-desktop",
+  "identifier": "com.d3code.archer-harness",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -30,7 +30,7 @@
     "resources": ["resources/**/*"],
     "licenseFile": "licenses/INSTALLER-LICENSE.txt",
     "category": "DeveloperTool",
-    "copyright": "Copyright © 2026 Deepseek Harness Desktop contributors",
+    "copyright": "Copyright © 2026 Archer contributors",
     "macOS": {
       "minimumSystemVersion": "10.15",
       "hardenedRuntime": true

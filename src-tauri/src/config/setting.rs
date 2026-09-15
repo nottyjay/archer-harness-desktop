@@ -28,7 +28,7 @@ pub struct Setting {
     /// 内容有变更 → 重新进入预设引导。`None` = 老用户升级（无基线）→ 弹一次建立基线。
     #[serde(default)]
     pub preset_hash: Option<String>,
-    /// 旧版 AppData `data/dsh` → 官方 `$DSH_HOME`（~/.dsh）数据迁移是否已完成。
+    /// 旧版 AppData `data/dsh` → Archer `$DSH_HOME`（~/.archer）数据迁移是否已完成。
     /// 幂等标记：迁移成功并删除旧目录后置位，避免重复合并。
     #[serde(default)]
     pub dsh_home_migrated: bool,

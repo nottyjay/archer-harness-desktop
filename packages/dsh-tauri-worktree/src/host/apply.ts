@@ -36,7 +36,7 @@ export function apply(ctx: HostContext, config: PluginConfig = {}): void {
   const cfg = config ?? {}
   const worktreesRoot = typeof cfg.worktreesRoot === 'string' && cfg.worktreesRoot
     ? cfg.worktreesRoot
-    : join(homedir(), '.dsh')
+    : join(homedir(), '.archer')
 
   // 生命周期钩子：会话 turn/end 挂为命名钩子（hookable），apply 只做事件转发。
   const hooks = createWorktreeHooks()

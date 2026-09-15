@@ -1,7 +1,7 @@
 /**
  * host/storage.ts — workspace 统一的宿主文件存储（unstorage fs driver + 原子写）。
  *
- * 唯一入口 `createAtomicFsStorage(featureDir)`：`featureDir` 是 DSH_HOME（默认 `~/.dsh`）
+ * 唯一入口 `createAtomicFsStorage(featureDir)`：`featureDir` 是 DSH_HOME（默认 `~/.archer`）
  * 下的功能目录名（如 `"crons"`），内部拼接 `$DSH_HOME/<featureDir>`；绝对路径原样使用。
  */
 
@@ -19,8 +19,8 @@ import fsDriver from 'unstorage/drivers/fs'
 const RENAME_MAX_RETRIES = 8
 const RENAME_RETRY_DELAY_MS = 25
 
-/** 宿主数据根目录（优先使用 $DSH_HOME，默认 ~/.dsh）。 */
-const DSH_HOME = process.env.DSH_HOME ?? join(homedir(), '.dsh')
+/** 宿主数据根目录（优先使用 $DSH_HOME，默认 ~/.archer）。 */
+const DSH_HOME = process.env.DSH_HOME ?? join(homedir(), '.archer')
 
 /**
  * 以 tmp+rename 原子写覆盖 target；Windows 下目标被瞬时占用时按有界退避重试。

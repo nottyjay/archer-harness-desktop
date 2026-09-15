@@ -38,7 +38,7 @@ pub use pending::launch_pending_installer;
 /// 仓库主页（同时用于构造 atom / expanded_assets / 下载地址）
 const REPO_URL: &str = "https://github.com/hairyf/deepseek-harness-desktop";
 /// 版权信息（与 tauri.conf.json bundle.copyright 保持一致）
-const COPYRIGHT: &str = "Copyright © 2026 Deepseek Harness Desktop contributors";
+const COPYRIGHT: &str = "Copyright © 2026 Archer contributors";
 /// About 对话框的 "Powered by" 文案
 const POWERED_BY: &str = "DeepSeek Harness";
 /// AppData 下安装包存放目录名

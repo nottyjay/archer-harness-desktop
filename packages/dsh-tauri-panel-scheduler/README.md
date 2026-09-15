@@ -19,7 +19,7 @@
   - 计划模式选择：每天 / 间隔 / 工作日 / 每周，带动态时间参数组件
     （`HH:mm`、间隔分钟数、每周星期多选）；
   - 任务指令 textarea + 工作区选择 + 模式选择 + 模型选择；
-- 宿主调度引擎（`~/.dsh/dsh-tauri-panel-scheduler/tasks.json` + `runs.json` 原子持久化，
+- 宿主调度引擎（`~/.archer/dsh-tauri-panel-scheduler/tasks.json` + `runs.json` 原子持久化，
   自建 `setInterval` 节拍，无外部 cron 依赖）；
 - 每次执行 = 新建独立 Agent 会话 + `followup` 任务指令（无人值守），并归属目标工作区；
 - Agent 工具集：`scheduler_create` / `scheduler_list` / `scheduler_toggle` /

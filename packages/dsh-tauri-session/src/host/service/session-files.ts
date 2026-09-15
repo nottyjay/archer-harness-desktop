@@ -16,7 +16,7 @@ import { dirname, join, resolve, sep } from 'pathe'
 
 /** 会话数据根目录（默认 `$DSH_HOME/sessions`；测试可注入临时根）。 */
 function sessionsRoot(dshHome: string | undefined): string {
-  return join(dshHome ?? process.env.DSH_HOME ?? join(homedir(), '.dsh'), 'sessions')
+  return join(dshHome ?? process.env.DSH_HOME ?? join(homedir(), '.archer'), 'sessions')
 }
 
 /** 查找会话对象（host ctx.sessions）。 */

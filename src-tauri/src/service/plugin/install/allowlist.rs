@@ -421,7 +421,7 @@ allowBuilds:
 [ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED] Failed to prepare git-hosted package fetched from \"https://codeload.github.com/omdsh-dev/DSH-better-sidebar/tar.gz/f9153dfc1ce47cf43445c1b351ee3ae47b4ad9f1\"
 The git-hosted package \"dsh-better-sidebar@0.16.1\" needs to execute build scripts but is not in the \"onlyBuiltDependencies\" allowlist.
 ...
-This error happened while installing a direct dependency of C:\\Users\\hairy\\.dsh.dev\\profiles\\web
+This error happened while installing a direct dependency of C:\\Users\\hairy\\.archer.dev\\profiles\\web
 Add the package to \"onlyBuiltDependencies\" in your project's pnpm-workspace.yaml to allow it to run scripts. For example:
 onlyBuiltDependencies:
 - \"dsh-better-sidebar\"

@@ -63,4 +63,4 @@ macOS 的 Developer ID 签名、公证与 GitHub Actions Secrets 配置见 [macO
 ## 小贴士
 
 - 调试模式使用 **3081** 端口，正式版使用 **3080** —— 两者互不冲突，可以同时运行已安装版本与开发构建。
-- 调试数据与正式版隔离：使用 `~/.dsh.dev` 和 `.store.dev.dat`，不会迁移正式版数据，也不会注册生产版 `dsh` PATH shim。
+- 调试数据与正式版隔离：使用 `~/.archer.dev` 和 `.store.dev.dat`，不会迁移正式版数据，也不会注册生产版 `dsh` PATH shim。

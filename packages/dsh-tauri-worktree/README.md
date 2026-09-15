@@ -145,7 +145,7 @@ fire-and-forget 的 `discard`（删除由宿主后台完成；归档会话没有
 ## 用户流程
 
 1. 用户明确要求使用 worktree 后，Agent 调用 `create_worktree`。
-2. 插件创建 `~/.dsh/worktrees/[hash]/[dirname]`，并把会话交接到新工作树。
+2. 插件创建 `~/.archer/worktrees/[hash]/[dirname]`，并把会话交接到新工作树。
 3. 在工作树会话中修改、测试和提交代码。
 4. 用户明确请求或批准后，才能调用 `checkout_worktree`；该操作会把改动带回本地分支并移除工作树。
 5. 如果不需要保留改动，可从面板执行放弃操作。

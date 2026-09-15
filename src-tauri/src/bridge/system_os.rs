@@ -69,7 +69,7 @@ pub fn open_dir(app_handle: AppHandle, path: String) -> Result<(), String> {
     tauri_plugin_opener::open_path(&path, None::<&str>).map_err(|e| format!("OPEN_DIR_FAILED: {e}"))
 }
 
-/// 在系统文件管理器中打开数据目录（官方 $DSH_HOME，即 ~/.dsh）
+/// 在系统文件管理器中打开数据目录（Archer $DSH_HOME，即 ~/.archer）
 #[tauri::command]
 pub async fn reveal_data_dir(app_handle: AppHandle) -> Result<(), String> {
     let dsh_home = config::get_dsh_data_path(&app_handle);

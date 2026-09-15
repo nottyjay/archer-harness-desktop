@@ -17,4 +17,6 @@ pub struct NativeNotificationPayload {
     pub(crate) title: String,
     pub(crate) body: String,
     pub(crate) tag: Option<String>,
+    /// 前端将通知头像绘制成带实心背景的 PNG 后传入，作为常态托盘图标缓存。
+    pub(crate) avatar_png: Option<Vec<u8>>,
 }
