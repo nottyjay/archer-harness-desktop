@@ -38,6 +38,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
+mod catalog;
+
 /// 桌面端默认档案（内置，不可删除）
 pub const DEFAULT_PROFILE: &str = "web";
 
@@ -108,7 +110,8 @@ pub fn profile_dir_of(app_handle: &AppHandle, id: &str) -> PathBuf {
 const PROFILE_MINIMUM_RELEASE_AGE_EXCLUDES: [&str; 1] = ["zod@4.4.3"];
 
 pub(crate) fn ensure_profile_pnpm_policy(app_handle: &AppHandle) -> Result<(), String> {
-    let path = profile_dir_of(app_handle, &active_profile(app_handle)).join("pnpm-workspace.yaml");
+    let profile = profile_dir_of(app_handle, &active_profile(app_handle));
+    let path = profile.join("pnpm-workspace.yaml");
     let existing = match fs::read_to_string(&path) {
         Ok(content) => content,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -148,6 +151,9 @@ pub(crate) fn ensure_profile_pnpm_policy(app_handle: &AppHandle) -> Result<(), S
             path.display()
         );
     }
+    // 旧档案可能被 pnpm 把 catalog 值写成 `catalog:`（递归协议）。下一轮
+    // `dsh plugin add` 会在解析 catalog 时直接失败，内置插件自愈也被挡住。
+    catalog::heal_recursive_catalog_entries(&profile)?;
     Ok(())
 }
 
