@@ -23,8 +23,7 @@ import type { SandboxMode } from './index.ts'
  * The strictly-wider table: what a call whose effective mode is the key may
  * escalate TO. Checked at EXECUTION, never baked into a tool schema — the
  * schema's enum is {@link ESCALATION_TARGETS}, because schemas are
- * registry-global while the effective mode is per-call truth. An equal
- * requested mode is handled as a no-op by {@link approveEscalation}.
+ * registry-global while the effective mode is per-call truth.
  */
 export const WIDER_MODES: Record<string, readonly SandboxMode[]> = {
   'read-only': ['workspace-write', 'danger-full-access'],
@@ -135,16 +134,15 @@ export interface EscalationRequest {
   requestedMode: string
   /** The model's one-sentence reason, shown verbatim to the user inside the audit reason. */
   justification: string
-  /** The call's effective mode (session override ?? composition default) the request must widen or equal. */
+  /** The call's effective mode (session override ?? composition default) the request must strictly widen. */
   effectiveMode: SandboxMode
   /** The family's noun for the escalated action in user-facing texts (`command` for bash, `operation` for fs). */
   subject: string
 }
 
 /**
- * Resolve a sandbox-escalation request BEFORE anything executes: treat an
- * equal requested mode as a no-op; otherwise check strict widening against
- * the call's effective mode, then resolve the approval
+ * Resolve a sandbox-escalation request BEFORE anything executes: check strict
+ * widening against the call's effective mode, then resolve the approval
  * channel, then map every outcome — the ordered fail-closed sequence both
  * enforcing families share. Returns the granted mode to stamp onto exactly
  * this call; throws the distinct verbatim text for every other path (a
@@ -158,12 +156,6 @@ export interface EscalationRequest {
  */
 export async function approveEscalation<A, C>(request: EscalationRequest, approval: EscalationApproval<A, C>): Promise<SandboxMode> {
   const { requestedMode: mode, effectiveMode, justification, subject } = request
-  // Tool schemas are registry-global, while the effective mode is resolved per
-  // session. A model can therefore repeat the current mode after a session
-  // switch; accepting that idempotently avoids a false escalation failure and
-  // never grants more access than the call already has.
-  if (mode === effectiveMode)
-    return effectiveMode
   // Strict widening is an EXECUTION check against the call's effective mode —
   // deliberately not a schema constraint (the enum is the closed target
   // vocabulary; the effective mode is per-call truth).

@@ -42,11 +42,12 @@ pub const DSH_PORT: u16 = 3080;
 /// 争用同一个 3080 端口冲突。
 pub const DSH_DEV_PORT: u16 = 3081;
 
-/// Archer 用户数据目录名：release 构建的 `$DSH_HOME` 默认目录（`~/.archer`）。
+/// Official Harness still defaults to `~/.dsh`. The desktop injects `$DSH_HOME`
+/// at process start so the bundled CLI never needs a fork.
+/// Release default when `$DSH_HOME` is unset (`~/.archer`).
 pub const DSH_HOME_DIR_NAME: &str = ".archer";
-/// 开发（debug）构建的用户数据目录名（`~/.archer.dev`）：与生产数据目录隔离。
-/// 会话、档案、插件与主题等数据各自独立——`pnpm tauri dev` 与已安装桌面端
-/// 同时运行时互不干扰，也不会互相污染对方的会话数据。
+/// Debug default (`~/.archer.dev`): always injected, isolating `pnpm tauri dev`
+/// from an installed release build.
 pub const DSH_HOME_DEV_DIR_NAME: &str = ".archer.dev";
 
 /// 开发构建在 AppData 下使用的独立子目录。Node、Harness、pnpm、Git 等可执行

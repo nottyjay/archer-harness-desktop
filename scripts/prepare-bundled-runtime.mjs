@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { cp, mkdir, readFile, readdir, realpath, rename, rm, writeFile } from 'node:fs/promises'
-import { delimiter, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import process from 'node:process'
 
 const NODE_VERSION = 'v22.22.0'
@@ -10,8 +10,23 @@ const projectRoot = resolve(import.meta.dirname, '..')
 const bundledRoot = join(projectRoot, 'src-tauri', 'resources', 'bundled')
 const cacheRoot = join(projectRoot, '.tmp', 'bundled-runtime')
 const harnessRoot = join(projectRoot, 'vendor', 'deepseek-harness')
+const harnessWorkRoot = join(cacheRoot, 'harness-src')
+const dshPatchRoot = join(projectRoot, 'patches', 'dsh')
 const harnessCommit = readFileSync(join(harnessRoot, '.source-commit'), 'utf8').trim()
 const harnessVersion = JSON.parse(readFileSync(join(harnessRoot, 'package.json'), 'utf8')).version
+const skippedHarnessDirectoryNames = new Set([
+  '.artifacts',
+  '.cache',
+  '.dsh-build',
+  '.git',
+  '.pnpm-store',
+  '.sessions',
+  '.storages',
+  'coverage',
+  'dist',
+  'lib',
+  'node_modules',
+])
 
 function targetFromTriple(triple) {
   const os = triple?.includes('windows')
@@ -99,48 +114,74 @@ function hostTarget() {
   return `${os}-${arch}`
 }
 
+function harnessPnpmSpec(manifestRoot) {
+  const spec = JSON.parse(readFileSync(join(manifestRoot, 'package.json'), 'utf8')).packageManager
+  if (typeof spec !== 'string' || !spec.startsWith('pnpm@')) {
+    throw new Error(`Harness package.json packageManager must pin a pnpm version (got ${JSON.stringify(spec)})`)
+  }
+  return spec
+}
+
+function corepackEnv(corepackHome) {
+  return {
+    COREPACK_HOME: corepackHome,
+    COREPACK_ENABLE_AUTO_PIN: '0',
+    COREPACK_ENABLE_DOWNLOAD_PROMPT: '0',
+  }
+}
+
 /**
- * 内置 Node 发行版自带的 corepack 包目录：`pnpmInvocation` 用它找 corepack 入口，
- * `runPnpm` 用它把 shim 目录放进子进程 PATH。发行版未附带 corepack 时返回 undefined。
+ * 内置 Node 发行版自带的 corepack。Harness 根节点钉死 `packageManager`（当前是 pnpm@11.7.0），
+ * 桌面仓库则是 pnpm@10.28.2。打包必须走这份 corepack，禁止回退到系统 / 桌面 pnpm，也禁止
+ * `--config.manage-package-manager-versions=false`：那会把版本针关掉，正是 Windows 上
+ * ERR_PNPM_BAD_PM_VERSION 的反面。
  */
-function corepackPackageDir(nodeRoot) {
+function corepackPackage(nodeRoot) {
   const directory = process.platform === 'win32'
     ? join(nodeRoot, 'node_modules', 'corepack')
     : join(nodeRoot, 'lib', 'node_modules', 'corepack')
-  return existsSync(directory) ? directory : undefined
+  const entry = join(directory, 'dist', 'corepack.js')
+  const shims = join(directory, 'shims')
+  const shimName = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
+  if (!existsSync(entry)) {
+    throw new Error(
+      `Bundled Node.js ${NODE_VERSION} is missing corepack (${entry}). Harness pins ${harnessPnpmSpec(harnessRoot)} and cannot use the desktop repo's pnpm.`,
+    )
+  }
+  if (!existsSync(join(shims, shimName))) {
+    throw new Error(`Bundled corepack is missing the ${shimName} shim in ${shims}`)
+  }
+  return { directory, entry, shims }
 }
 
-function pnpmInvocation(node, nodeRoot, args) {
-  const corepackDirectory = corepackPackageDir(nodeRoot)
-  const corepack = corepackDirectory === undefined
-    ? undefined
-    : join(corepackDirectory, 'dist', 'corepack.js')
-  if (corepack !== undefined && existsSync(corepack)) {
-    return [node, [corepack, 'pnpm', ...args]]
-  }
-
-  const entrypoint = process.env.npm_execpath
-  if (entrypoint && ['.js', '.cjs', '.mjs'].includes(extname(entrypoint).toLowerCase())) {
-    return [node, [entrypoint, '--config.manage-package-manager-versions=false', ...args]]
-  }
-  return [process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', args]
-}
-
-function runPnpm(node, nodeRoot, args) {
-  const [command, commandArgs] = pnpmInvocation(node, nodeRoot, args)
-  // Harness 自己的脚本（`build:web` 等）还会再调一次 `pnpm`，而那一层只看 PATH。把内置 Node 的
-  // corepack shim 目录排在 PATH 最前，嵌套调用才会按项目 `packageManager`（Harness 根节点的
-  // `pnpm@11.7.0`）解析版本；否则它落到开发机全局 pnpm 上，只要那个版本比锁定值新，pnpm 的
-  // `packageManager` 校验就会以 ERR_PNPM_BAD_PM_VERSION 直接中断打包。
-  const corepackDirectory = corepackPackageDir(nodeRoot)
-  const shims = corepackDirectory === undefined ? undefined : join(corepackDirectory, 'shims')
-  const path = [shims, dirname(node), process.env.PATH]
+function activatePinnedPnpm(node, nodeRoot, spec) {
+  const corepack = corepackPackage(nodeRoot)
+  const corepackHome = join(cacheRoot, 'corepack')
+  const path = [dirname(node), process.env.PATH]
     .filter(entry => entry !== undefined && entry !== '')
     .join(delimiter)
-  run(command, commandArgs, {
-    cwd: harnessRoot,
+  run(node, [corepack.entry, 'prepare', spec, '--activate'], {
     env: {
       ...process.env,
+      ...corepackEnv(corepackHome),
+      PATH: path,
+    },
+  })
+  return { ...corepack, corepackHome, spec }
+}
+
+function runPnpm(node, pnpm, args, cwd) {
+  // Harness 脚本（`build:web` 等）还会再 spawn 一次 `pnpm`，那一层只看 PATH。corepack shim
+  // 必须排在系统 pnpm 前面，嵌套调用才会落到已 activate 的 pnpm@<pin>；否则 Windows 上只要
+  // 开发机全局 pnpm 比锁定值新，就会 ERR_PNPM_BAD_PM_VERSION。
+  const path = [pnpm.shims, dirname(node), process.env.PATH]
+    .filter(entry => entry !== undefined && entry !== '')
+    .join(delimiter)
+  run(node, [pnpm.entry, pnpm.spec, ...args], {
+    cwd,
+    env: {
+      ...process.env,
+      ...corepackEnv(pnpm.corepackHome),
       CI: 'true',
       DSH_BUILD_CLIENT_PROFILE: 'official',
       DSH_CLIENT_BUILD_PROFILE: 'official',
@@ -153,6 +194,71 @@ function runPnpm(node, nodeRoot, args) {
       PATH: path,
     },
   })
+}
+
+async function dshPatchFiles() {
+  if (!existsSync(dshPatchRoot)) return []
+  return (await readdir(dshPatchRoot))
+    .filter(name => name.endsWith('.patch'))
+    .sort()
+    .map(name => join(dshPatchRoot, name))
+}
+
+async function dshPatchStamp(patches) {
+  const hash = createHash('sha256')
+  hash.update(harnessCommit)
+  for (const patch of patches) {
+    hash.update(relative(projectRoot, patch))
+    hash.update(await readFile(patch))
+  }
+  return hash.digest('hex')
+}
+
+function applyDshPatches(workRoot, patches) {
+  for (const patch of patches) {
+    const check = spawnSync('git', ['apply', '--check', '--whitespace=nowarn', patch], {
+      cwd: workRoot,
+      encoding: 'utf8',
+    })
+    if (check.error) {
+      if (check.error.code === 'ENOENT') {
+        throw new Error('git is required to apply patches/dsh onto the Harness staging copy')
+      }
+      throw check.error
+    }
+    if (check.status !== 0) {
+      const name = relative(projectRoot, patch)
+      const detail = `${check.stderr ?? ''}${check.stdout ?? ''}`.trim()
+      throw new Error(
+        `DSH patch ${name} does not apply to vendor/deepseek-harness@${harnessCommit}. Rebase the patch after upgrading DSH.${detail ? `\n${detail}` : ''}`,
+      )
+    }
+    run('git', ['apply', '--whitespace=nowarn', patch], { cwd: workRoot })
+  }
+}
+
+function shouldCopyHarnessPath(src) {
+  const rel = relative(harnessRoot, src)
+  if (rel === '') return true
+  const parts = rel.split(sep)
+  if (parts.some(part => skippedHarnessDirectoryNames.has(part))) return false
+  const base = parts.at(-1)
+  return base !== '.dsh-patch-stamp' && !base.endsWith('.tsbuildinfo')
+}
+
+async function materializePatchedHarness() {
+  const patches = await dshPatchFiles()
+  const stamp = await dshPatchStamp(patches)
+  const stampPath = join(harnessWorkRoot, '.dsh-patch-stamp')
+  if (existsSync(stampPath) && (await readFile(stampPath, 'utf8')).trim() === stamp) {
+    return harnessWorkRoot
+  }
+
+  await rm(harnessWorkRoot, { recursive: true, force: true })
+  await cp(harnessRoot, harnessWorkRoot, { recursive: true, filter: shouldCopyHarnessPath })
+  applyDshPatches(harnessWorkRoot, patches)
+  await writeFile(stampPath, `${stamp}\n`)
+  return harnessWorkRoot
 }
 
 function isInside(parent, child) {
@@ -180,8 +286,8 @@ async function materializeExternalLinks(root, directory = root) {
   }
 }
 
-async function installHarnessCli(destination) {
-  const source = join(harnessRoot, 'apps', 'cli')
+async function installHarnessCli(destination, sourceRoot) {
+  const source = join(sourceRoot, 'apps', 'cli')
   const target = join(destination, 'node_modules', '@deepseek-ai', 'dsh')
   const targetLib = join(target, 'lib')
   if (existsSync(join(targetLib, 'bin.js'))) return
@@ -234,11 +340,13 @@ async function prepareHarness(destination, target, override) {
     if (!existsSync(join(harnessRoot, 'apps', 'cli', 'package.json'))) {
       throw new Error(`Bundled Harness source is missing: ${harnessRoot}`)
     }
+    const workRoot = await materializePatchedHarness()
     const hostNodeRoot = await prepareNode(currentHost)
     const hostNode = nodeBinary(hostNodeRoot, currentHost)
-    runPnpm(hostNode, hostNodeRoot, ['install', '--frozen-lockfile'])
-    runPnpm(hostNode, hostNodeRoot, ['run', 'build:native-system'])
-    runPnpm(hostNode, hostNodeRoot, ['run', 'build:lib:host'])
+    const pnpm = activatePinnedPnpm(hostNode, hostNodeRoot, harnessPnpmSpec(workRoot))
+    runPnpm(hostNode, pnpm, ['install', '--frozen-lockfile'], workRoot)
+    runPnpm(hostNode, pnpm, ['run', 'build:native-system'], workRoot)
+    runPnpm(hostNode, pnpm, ['run', 'build:lib:host'], workRoot)
     // Client 半场的 tsc 工程（`tsconfig.client.json`）不在 `build:lib:host` 里：host 工程显式
     // 排除了 `packages/client/*/src/**`，`lib/types/**`（Node 半场入口）与 `lib/types/client/**`
     // 只由这一步产出。缺了它，下面的 client tsdown 会以
@@ -248,10 +356,10 @@ async function prepareHarness(destination, target, override) {
     // `--noCheck`：这一步只要产物，不要类型结论。Client 聚合里的 `packages/client/*/tests/**`
     // 存在既有的 React 类型不匹配（19 的 `ReactNode` 交给 18 的类型），带检查会以非零码中断打包；
     // 上游 `build:lib:client` 在当前依赖解析下同样过不去，所以产物步骤跳过类型检查。
-    runPnpm(hostNode, hostNodeRoot, ['exec', 'tsc', '-b', 'tsconfig.client.json', '--noCheck'])
-    runPnpm(hostNode, hostNodeRoot, ['exec', 'tsdown', '--env.DSH_BUILD_FACE', 'client'])
-    runPnpm(hostNode, hostNodeRoot, ['run', 'build:web'])
-    runPnpm(hostNode, hostNodeRoot, [
+    runPnpm(hostNode, pnpm, ['exec', 'tsc', '-b', 'tsconfig.client.json', '--noCheck'], workRoot)
+    runPnpm(hostNode, pnpm, ['exec', 'tsdown', '--env.DSH_BUILD_FACE', 'client'], workRoot)
+    runPnpm(hostNode, pnpm, ['run', 'build:web'], workRoot)
+    runPnpm(hostNode, pnpm, [
       '--filter',
       'dsh-python-runtime-closure',
       'deploy',
@@ -261,9 +369,9 @@ async function prepareHarness(destination, target, override) {
       '--config.auto-install-peers=true',
       '--config.link-workspace-packages=true',
       destination,
-    ])
+    ], workRoot)
     await materializeExternalLinks(destination)
-    await installHarnessCli(destination)
+    await installHarnessCli(destination, workRoot)
     await validateBundledWorkspacePeers(destination)
   }
 

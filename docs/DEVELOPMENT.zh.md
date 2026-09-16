@@ -29,8 +29,12 @@ pnpm tauri dev        # 调试模式运行桌面端
 pnpm tauri build         # 构建安装包
 ```
 
-发布构建会自动编译 `vendor/deepseek-harness`，并下载目标平台对应的 Node.js
-22.22.0。下载内容会校验 SHA-256，并缓存在 `.tmp/bundled-runtime`。
+发布构建会把干净的 `vendor/deepseek-harness` 复制到 `.tmp/bundled-runtime/harness-src`，
+按顺序应用 `patches/dsh/*.patch`（打不上就失败），再编译这份暂存副本；vendor 本身保持
+上游原版。下载目标平台对应的 Node.js 22.22.0，校验 SHA-256，并缓存在
+`.tmp/bundled-runtime`。Harness 根节点钉死 `packageManager`（当前 `pnpm@11.7.0`），
+打包用内置 Node 的 corepack 安装并激活该版本；不要用桌面仓库的 pnpm 10，也不要关掉
+pnpm 的版本针。
 
 也可以用预编译产物覆盖自动步骤。通用环境变量作为回退值，目标专用变量
 优先级更高：

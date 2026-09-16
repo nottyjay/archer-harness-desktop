@@ -29,9 +29,14 @@ pnpm tauri dev        # run the desktop app in debug mode
 pnpm tauri build         # build the current platform installer
 ```
 
-Release builds compile `vendor/deepseek-harness` and download the matching
-Node.js 22.22.0 distribution automatically. The download is checksum verified
-and cached under `.tmp/bundled-runtime`.
+Release builds copy the pristine `vendor/deepseek-harness` tree into
+`.tmp/bundled-runtime/harness-src`, apply `patches/dsh/*.patch` in order
+(failing if a patch does not apply), and compile that staging copy. The vendor
+tree itself stays upstream. The matching Node.js 22.22.0 distribution is
+downloaded, checksum verified, and cached under `.tmp/bundled-runtime`.
+Harness pins `packageManager` (currently `pnpm@11.7.0`); packaging activates
+that version through the bundled Node corepack. Do not use the desktop repo's
+pnpm 10, and do not disable pnpm's package-manager version pin.
 
 Prebuilt payloads can override either automatic step. Generic variables are
 fallbacks and target-specific variables take precedence:

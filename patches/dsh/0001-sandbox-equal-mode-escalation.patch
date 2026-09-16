@@ -1,0 +1,208 @@
+# Applied by scripts/prepare-bundled-runtime.mjs onto a staging copy of
+# vendor/deepseek-harness. Do not apply this in vendor/ itself.
+# Subject: sandbox equal-mode retry is a no-op without approval
+#
+diff --git a/packages/fs/tool-fs/README.md b/packages/fs/tool-fs/README.md
+index 9d338a6..7a23a48 100644
+--- a/packages/fs/tool-fs/README.md
++++ b/packages/fs/tool-fs/README.md
+@@ -67,7 +67,7 @@ The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-a
+ 
+ Path authorization for `read` and `read_image` belongs entirely to `ctx.fs`; media-type declarations and file signatures only decide whether `read_image` accepts the bytes returned by that backend.
+ 
+-With the policy plugin mounted, `write` and `edit` obtain their guard from the `fs/*` intent slots, so an unread target or a stale observation fails with `FS_NOT_OBSERVED` or `FS_STALE_VERSION` and a recovery instruction. Under a confining backend (`fs-sandbox`), `write`/`edit` additionally advertise `sandbox_permissions` and `justification`; a denied mutation returns the `[sandbox: file access denied under <mode> mode]` marker with the same-turn escalation hint, and an approved retry may stamp a strictly wider mode for that one call.
++With the policy plugin mounted, `write` and `edit` obtain their guard from the `fs/*` intent slots, so an unread target or a stale observation fails with `FS_NOT_OBSERVED` or `FS_STALE_VERSION` and a recovery instruction. Under a confining backend (`fs-sandbox`), `write`/`edit` additionally advertise `sandbox_permissions` and `justification`; a denied mutation returns the `[sandbox: file access denied under <mode> mode]` marker with the same-turn escalation hint, an equal-mode retry is treated as a no-op without approval, and an approved retry may stamp a strictly wider mode for that one call.
+ 
+ ### Failures and recovery
+ 
+diff --git a/packages/fs/tool-fs/README.zh.md b/packages/fs/tool-fs/README.zh.md
+index 0c34f84..0fd2e85 100644
+--- a/packages/fs/tool-fs/README.zh.md
++++ b/packages/fs/tool-fs/README.zh.md
+@@ -67,7 +67,7 @@ kind: "package-reference"
+ 
+ `read` 与 `read_image` 的路径授权完全由 `ctx.fs` 负责；媒体类型声明和文件签名只决定 `read_image` 是否接受该后端返回的字节。
+ 
+-挂载策略插件后，`write` 与 `edit` 从 `fs/*` 意图槽位取得防护，因此未读目标或陈旧观察会以 `FS_NOT_OBSERVED` 或 `FS_STALE_VERSION` 及恢复指令失败。使用施加沙箱限制的后端（`fs-sandbox`）时，`write`/`edit` 还会公开 `sandbox_permissions` 与 `justification`；被拒绝的变更返回 `[sandbox: file access denied under <mode> mode]` 标记与同轮次升级提示，获批的重试可以在该次调用中加盖严格更宽的模式。
++挂载策略插件后，`write` 与 `edit` 从 `fs/*` 意图槽位取得防护，因此未读目标或陈旧观察会以 `FS_NOT_OBSERVED` 或 `FS_STALE_VERSION` 及恢复指令失败。使用施加沙箱限制的后端（`fs-sandbox`）时，`write`/`edit` 还会公开 `sandbox_permissions` 与 `justification`；被拒绝的变更返回 `[sandbox: file access denied under <mode> mode]` 标记与同轮次升级提示，同模式重试按无操作处理且不弹审批，获批的重试可以在该次调用中加盖严格更宽的模式。
+ 
+ ### 失败与恢复
+ 
+diff --git a/packages/fs/tool-fs/tests/tools.spec.ts b/packages/fs/tool-fs/tests/tools.spec.ts
+index 49ad5d7..9b2aae8 100644
+--- a/packages/fs/tool-fs/tests/tools.spec.ts
++++ b/packages/fs/tool-fs/tests/tools.spec.ts
+@@ -907,6 +907,23 @@ describe('sandbox escalation API (write/edit)', () => {
+     }])
+   })
+ 
++  it('an equal-mode edit request is a no-op without an approval service', async () => {
++    const { ctx, fs } = await setupConfining()
++    const agent = escalationAgent([{ type: 'sandbox/mode', data: { mode: 'danger-full-access' } }])
++    fs.files.set('key:a.txt', 'old')
++    await call(ctx, 'read', { file_path: 'a.txt' }, agent)
++    const result = await call(ctx, 'edit', {
++      file_path: 'a.txt',
++      old_string: 'old',
++      new_string: 'new',
++      sandbox_permissions: 'danger-full-access',
++      justification: 'the session already grants this mode',
++    }, agent)
++    expect(result.isError).toBe(false)
++    expect(fs.files.get('key:a.txt')).toBe('new')
++    expect(fs.stamped[0]).toMatchObject({ mode: 'danger-full-access' })
++  })
++
+   it('a denied write maps to the shared marker plus the escalation hint (isError)', async () => {
+     const { ctx, fs } = await setupConfining()
+     fs.rejectWith = new FsError('denied', 'FS_SANDBOX_DENIED')
+diff --git a/packages/sandbox/sandbox/README.md b/packages/sandbox/sandbox/README.md
+index b80e923..4af7955 100644
+--- a/packages/sandbox/sandbox/README.md
++++ b/packages/sandbox/sandbox/README.md
+@@ -63,7 +63,7 @@ Enforcement is reported per call: `full` means the backend governs every promise
+ 
+ ### Denied calls and escalation
+ 
+-When a confined call is denied, the operation reports a denial marker naming the mode — `[sandbox: file access denied under <mode> mode]` — and, when the composition advertises escalation, an escalation hint. The model may retry the exact call once with `sandbox_permissions` (the narrowest wider mode that suffices) plus a `justification`; the user sees one approval prompt and can allow once, reject, or cancel. The escalation must be strictly wider than the call's effective mode, and it applies to that one call only.
++When a confined call is denied, the operation reports a denial marker naming the mode — `[sandbox: file access denied under <mode> mode]` — and, when the composition advertises escalation, an escalation hint. The model may retry the exact call once with `sandbox_permissions` (the narrowest wider mode that suffices) plus a `justification`; the user sees one approval prompt and can allow once, reject, or cancel. The escalation must be strictly wider than the call's effective mode, and it applies to that one call only. A request that repeats the effective mode is accepted as a no-op without an approval prompt.
+ 
+ ### Fail-closed behavior
+ 
+@@ -97,7 +97,7 @@ This section explains the design decisions behind the contract and points at the
+ 
+ ### Escalation choreography
+ 
+-The ladder is a closed table — `read-only` may escalate to `workspace-write` or `danger-full-access`, `workspace-write` only to `danger-full-access` — checked at execution, never baked into a tool schema, whose enum stays the closed target vocabulary. [`approveEscalation`](src/escalation.ts) validates the `sandbox_permissions`/`justification` pairing, rejects non-widening requests without prompting a human, and maps every approval outcome to its own error before anything executes.
++The ladder is a closed table — `read-only` may escalate to `workspace-write` or `danger-full-access`, `workspace-write` only to `danger-full-access` — checked at execution, never baked into a tool schema, whose enum stays the closed target vocabulary. [`approveEscalation`](src/escalation.ts) validates the `sandbox_permissions`/`justification` pairing, accepts an equal-mode request as a no-op, rejects other non-widening requests without prompting a human, and maps every approval outcome to its own error before anything executes.
+ 
+ ### Writable roots
+ 
+diff --git a/packages/sandbox/sandbox/README.zh.md b/packages/sandbox/sandbox/README.zh.md
+index 9d80a36..fab88a1 100644
+--- a/packages/sandbox/sandbox/README.zh.md
++++ b/packages/sandbox/sandbox/README.zh.md
+@@ -63,7 +63,7 @@ kind: "package-reference"
+ 
+ ### 被拒绝的调用与升权
+ 
+-受限调用被拒绝时，操作会报告指明模式的拒绝标记——`[sandbox: file access denied under <mode> mode]`——组合声明升权能力时还会给出升权提示。模型可以用 `sandbox_permissions`（足以放行的最窄更宽模式）加 `justification` 重试一次完全相同的调用；用户会看到一次审批提示，可以选择允许一次、拒绝或取消。升权必须严格宽于调用的生效模式，且只作用于该次调用。
++受限调用被拒绝时，操作会报告指明模式的拒绝标记——`[sandbox: file access denied under <mode> mode]`——组合声明升权能力时还会给出升权提示。模型可以用 `sandbox_permissions`（足以放行的最窄更宽模式）加 `justification` 重试一次完全相同的调用；用户会看到一次审批提示，可以选择允许一次、拒绝或取消。升权必须严格宽于调用的生效模式，且只作用于该次调用。若请求模式与生效模式相同，则视为无操作直接沿用当前策略，不弹审批。
+ 
+ ### 故障关闭行为
+ 
+@@ -97,7 +97,7 @@ kind: "package-reference"
+ 
+ ### 升权编排
+ 
+-阶梯是封闭表——`read-only` 可升权到 `workspace-write` 或 `danger-full-access`，`workspace-write` 只能升权到 `danger-full-access`——在执行时检查，绝不写入工具 schema，schema 的枚举保持封闭的目标词汇。[`approveEscalation`](src/escalation.ts) 校验 `sandbox_permissions`/`justification` 配对、不提示人类就拒绝非加宽请求，并在任何执行前把每个审批结果映射到各自的错误。
++阶梯是封闭表——`read-only` 可升权到 `workspace-write` 或 `danger-full-access`，`workspace-write` 只能升权到 `danger-full-access`——在执行时检查，绝不写入工具 schema，schema 的枚举保持封闭的目标词汇。[`approveEscalation`](src/escalation.ts) 校验 `sandbox_permissions`/`justification` 配对；同模式请求按无操作处理，其他非加宽请求不提示人类即拒绝，并在任何执行前把每个审批结果映射到各自的错误。
+ 
+ ### 可写根目录
+ 
+diff --git a/packages/sandbox/sandbox/src/escalation.ts b/packages/sandbox/sandbox/src/escalation.ts
+index 5cc180f..c7d136a 100644
+--- a/packages/sandbox/sandbox/src/escalation.ts
++++ b/packages/sandbox/sandbox/src/escalation.ts
+@@ -23,7 +23,8 @@ import type { SandboxMode } from './index.ts'
+  * The strictly-wider table: what a call whose effective mode is the key may
+  * escalate TO. Checked at EXECUTION, never baked into a tool schema — the
+  * schema's enum is {@link ESCALATION_TARGETS}, because schemas are
+- * registry-global while the effective mode is per-call truth.
++ * registry-global while the effective mode is per-call truth. An equal
++ * requested mode is handled as a no-op by {@link approveEscalation}.
+  */
+ export const WIDER_MODES: Record<string, readonly SandboxMode[]> = {
+   'read-only': ['workspace-write', 'danger-full-access'],
+@@ -134,15 +135,16 @@ export interface EscalationRequest {
+   requestedMode: string
+   /** The model's one-sentence reason, shown verbatim to the user inside the audit reason. */
+   justification: string
+-  /** The call's effective mode (session override ?? composition default) the request must strictly widen. */
++  /** The call's effective mode (session override ?? composition default) the request must widen or equal. */
+   effectiveMode: SandboxMode
+   /** The family's noun for the escalated action in user-facing texts (`command` for bash, `operation` for fs). */
+   subject: string
+ }
+ 
+ /**
+- * Resolve a sandbox-escalation request BEFORE anything executes: check strict
+- * widening against the call's effective mode, then resolve the approval
++ * Resolve a sandbox-escalation request BEFORE anything executes: treat an
++ * equal requested mode as a no-op; otherwise check strict widening against
++ * the call's effective mode, then resolve the approval
+  * channel, then map every outcome — the ordered fail-closed sequence both
+  * enforcing families share. Returns the granted mode to stamp onto exactly
+  * this call; throws the distinct verbatim text for every other path (a
+@@ -156,6 +158,12 @@ export interface EscalationRequest {
+  */
+ export async function approveEscalation<A, C>(request: EscalationRequest, approval: EscalationApproval<A, C>): Promise<SandboxMode> {
+   const { requestedMode: mode, effectiveMode, justification, subject } = request
++  // Tool schemas are registry-global, while the effective mode is resolved per
++  // session. A model can therefore repeat the current mode after a session
++  // switch; accepting that idempotently avoids a false escalation failure and
++  // never grants more access than the call already has.
++  if (mode === effectiveMode)
++    return effectiveMode
+   // Strict widening is an EXECUTION check against the call's effective mode —
+   // deliberately not a schema constraint (the enum is the closed target
+   // vocabulary; the effective mode is per-call truth).
+diff --git a/packages/sandbox/sandbox/tests/escalation.spec.ts b/packages/sandbox/sandbox/tests/escalation.spec.ts
+index 15810d0..1ad695a 100644
+--- a/packages/sandbox/sandbox/tests/escalation.spec.ts
++++ b/packages/sandbox/sandbox/tests/escalation.spec.ts
+@@ -84,13 +84,26 @@ describe('approveEscalation', () => {
+   it('a non-widening request fails closed with its own text and never asks', async () => {
+     const seen: unknown[] = []
+     const spy = ingredients({ approver: approver('allowed-once', r => seen.push(r)) })
+-    await expect(approveEscalation(req({ requestedMode: 'read-only' }), spy))
+-      .rejects.toThrow(/not strictly wider than this call's current "read-only" mode/)
++    await expect(approveEscalation(req({ requestedMode: 'read-only', effectiveMode: 'workspace-write' as never }), spy))
++      .rejects.toThrow(/not strictly wider than this call's current "workspace-write" mode/)
+     await expect(approveEscalation(req({ requestedMode: 'workspace-write', effectiveMode: 'danger-full-access' as never }), spy))
+       .rejects.toThrow(/not strictly wider/)
+     expect(seen).toEqual([])
+   })
+ 
++  it('accepts an equal-mode request as a no-op without asking for approval', async () => {
++    const seen: unknown[] = []
++    const spy = ingredients({
++      approver: approver('allowed-once', request => seen.push(request)),
++    })
++    const granted = await approveEscalation(
++      req({ requestedMode: 'danger-full-access', effectiveMode: 'danger-full-access' as never }),
++      spy,
++    )
++    expect(granted).toBe('danger-full-access')
++    expect(seen).toEqual([])
++  })
++
+   it('a missing approval service and an agent-less call each fail closed with distinct text', async () => {
+     await expect(approveEscalation(req(), ingredients({ approver: undefined }))).rejects.toThrow(/no approval service is composed/)
+     await expect(approveEscalation(req(), ingredients({ agent: undefined }))).rejects.toThrow(/no agent to route it through/)
+diff --git a/packages/shell/tool-bash/tests/tools.spec.ts b/packages/shell/tool-bash/tests/tools.spec.ts
+index 1dfbd27..f8e5a9f 100644
+--- a/packages/shell/tool-bash/tests/tools.spec.ts
++++ b/packages/shell/tool-bash/tests/tools.spec.ts
+@@ -626,7 +626,7 @@ describe('sandbox escalation through the generic task producer', () => {
+     const { ctx } = await setupSandboxed(true)
+     const prompted = vi.fn()
+     ctx.on('approval/request', () => { prompted(); return Promise.resolve<ApprovalOutcome>('allowed-once') })
+-    const result = await call(ctx, 'bash', { ...escalate, sandbox_permissions: 'workspace-write' }, sandboxAgent('workspace-write'))
++    const result = await call(ctx, 'bash', { ...escalate, sandbox_permissions: 'workspace-write' }, sandboxAgent('danger-full-access'))
+     expect(text(result)).toContain('not strictly wider')
+     expect(prompted).not.toHaveBeenCalled()
+ 
+diff --git a/packages/shell/tool-pwsh/tests/tools.spec.ts b/packages/shell/tool-pwsh/tests/tools.spec.ts
+index dbd1f13..0f77414 100644
+--- a/packages/shell/tool-pwsh/tests/tools.spec.ts
++++ b/packages/shell/tool-pwsh/tests/tools.spec.ts
+@@ -632,7 +632,7 @@ describe('sandbox escalation through ctx.approval', () => {
+     const { ctx } = await setupSandboxed(true)
+     const prompted = vi.fn()
+     ctx.on('approval/request', () => { prompted(); return Promise.resolve<ApprovalOutcome>('allowed-once') })
+-    const result = await call(ctx, 'pwsh', { ...escalate, sandbox_permissions: 'workspace-write' }, sandboxAgent('workspace-write'))
++    const result = await call(ctx, 'pwsh', { ...escalate, sandbox_permissions: 'workspace-write' }, sandboxAgent('danger-full-access'))
+     expect(text(result)).toContain('not strictly wider')
+     expect(prompted).not.toHaveBeenCalled()
+ 

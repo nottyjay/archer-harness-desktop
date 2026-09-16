@@ -15,6 +15,8 @@ struct TrayIconStateInner {
     base_icon: Image<'static>,
     unread_icon: Image<'static>,
     transparent_icon: Image<'static>,
+    /// macOS template glyph vs a full-color (avatar) tile.
+    uses_template: bool,
     unread_count: u32,
     blink_task: Option<JoinHandle<()>>,
 }
@@ -34,6 +36,7 @@ impl TrayIconState {
                 base_icon,
                 unread_icon,
                 transparent_icon,
+                uses_template: cfg!(target_os = "macos"),
                 unread_count: 0,
                 blink_task: None,
             }),
@@ -47,6 +50,7 @@ impl TrayIconState {
                     guard.base_icon = make_opaque(&icon.to_owned(), [31, 41, 55]);
                     guard.unread_icon = build_unread_icon(&guard.base_icon);
                     guard.transparent_icon = build_transparent_icon(&guard.base_icon);
+                    guard.uses_template = false;
                     if let Some(task) = guard.blink_task.take() {
                         task.abort();
                     }
@@ -76,14 +80,18 @@ impl TrayIconState {
         let Some(tray) = app.tray_by_id(TRAY_ICON_ID) else {
             return;
         };
-        let icon = self.inner.lock().ok().map(|guard| {
-            if unread {
+        let (icon, uses_template) = match self.inner.lock().ok().map(|guard| {
+            let icon = if unread {
                 guard.unread_icon.clone()
             } else {
                 guard.base_icon.clone()
-            }
-        });
-        let _ = tray.set_icon(icon);
+            };
+            (icon, guard.uses_template)
+        }) {
+            Some(pair) => pair,
+            None => return,
+        };
+        set_tray_image(&tray, Some(icon), uses_template);
         // Explicitly restore visibility after every image update. Some menu bar/tray hosts
         // remove an icon when a transient transparent image is applied.
         let _ = tray.set_visible(true);
@@ -116,6 +124,7 @@ impl TrayIconState {
         }
         let base = guard.base_icon.clone();
         let transparent = guard.transparent_icon.clone();
+        let uses_template = guard.uses_template;
         let task_app = app.clone();
         guard.blink_task = Some(tauri::async_runtime::spawn(async move {
             let mut show_transparent = true;
@@ -130,7 +139,7 @@ impl TrayIconState {
                     base.clone()
                 };
                 show_transparent = !show_transparent;
-                let _ = tray.set_icon(Some(icon));
+                set_tray_image(&tray, Some(icon), uses_template);
                 let _ = tray.set_visible(true);
             }
         }));
@@ -150,14 +159,33 @@ pub fn initial_icon<R: Runtime>(app: &AppHandle<R>) -> Image<'static> {
     #[cfg(target_os = "macos")]
     {
         if let Ok(icon) = Image::from_bytes(MACOS_TRAY_BYTES) {
-            // White glyph on the dark tile. Black-on-dark has no contrast
-            // and reads as a solid blob in the menu bar.
-            return make_opaque(&icon.to_owned(), [31, 41, 55]);
+            // Keep alpha. macOS 26 already draws a glass plate behind extras;
+            // compositing onto [31, 41, 55] made a second opaque tile and a black blob.
+            // Template images ignore RGB and tint from the alpha mask.
+            return icon.to_owned();
         }
     }
     app.default_window_icon()
         .map(|icon| make_opaque(&icon.clone().to_owned(), [31, 41, 55]))
         .unwrap_or_else(|| Image::new_owned(vec![31, 41, 55, 255], 1, 1))
+}
+
+fn set_tray_image<R: Runtime>(
+    tray: &tauri::tray::TrayIcon<R>,
+    icon: Option<Image<'_>>,
+    as_template: bool,
+) {
+    #[cfg(target_os = "macos")]
+    {
+        // tray-icon's set_icon() hardcodes is_template=false, which would
+        // immediately undo TrayIconBuilder::icon_as_template(true).
+        let _ = tray.set_icon_with_as_template(icon, as_template);
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = as_template;
+        let _ = tray.set_icon(icon);
+    }
 }
 
 fn make_opaque(icon: &Image<'_>, background: [u8; 3]) -> Image<'static> {
@@ -206,5 +234,28 @@ mod tests {
         assert_eq!(opaque.rgba()[3], 255);
         assert_eq!(opaque.rgba()[7], 255);
         assert_eq!(&opaque.rgba()[4..7], &[20, 40, 60]);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_tray_png_is_template_safe() {
+        let icon = Image::from_bytes(MACOS_TRAY_BYTES).expect("macos-tray.png");
+        let rgba = icon.rgba();
+        assert_eq!(rgba[3], 0, "corner must stay transparent");
+        let mut opaque_black = 0u32;
+        for pixel in rgba.chunks_exact(4) {
+            if pixel[3] == 0 {
+                continue;
+            }
+            assert_eq!(
+                &pixel[..3],
+                &[0, 0, 0],
+                "template glyphs must be black+alpha, got {pixel:?}"
+            );
+            if pixel[3] == 255 {
+                opaque_black += 1;
+            }
+        }
+        assert!(opaque_black > 0, "expected a solid black glyph");
     }
 }

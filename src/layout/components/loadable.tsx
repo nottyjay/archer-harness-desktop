@@ -10,21 +10,18 @@ export type IconComponent = ComponentType<SVGProps<SVGSVGElement>>
 /**
  * 通用加载/安装界面。
  *
- * 不传任何 props 时，渲染结果与官方 web shell 的 boot 加载页
- * （packages/client/web 的 AppRoot + AppRoot.module.css）逐项一致：
- * wordmark（16px/600/0.08em）+ 20px 2px 单色 spinner（0.8s 旋转，
- * 顶弧取 brand-primary，明暗主题下即黑/白）+ 12px/18px hint，16px gap。
- * 颜色通过 load-* 系列主题变量精确对应官方 dsw alias token。
- * spinner 动画直接抄官方（.animate-load-spin + @keyframes load-spin），
+ * 默认 wordmark + 20px 2px spinner + hint。启动等待页把 brand 设为 `logo`，
+ * 用彩色 Archer SVG 替换文字 wordmark。spinner 动画用 `.animate-load-spin`，
  * 不用 Tailwind animate-spin，避免 var() 间接层在 WebView2 下不旋转。
- * 传入 icon/title/subtitle/percentage/logs/errorMsg/onRetry 后按需扩展。
  */
 export interface LoadableProps {
-  /** 状态图标（@gravity-ui/icons 组件），仅失败态显示；加载态已有 spinner，不再叠加图标（官方 boot 页无图标） */
+  /** 状态图标（@gravity-ui/icons 组件），仅失败态显示；加载态已有 spinner，不再叠加图标 */
   icon?: IconComponent
-  /** wordmark 位文案，默认官网的 "HARNESS" */
+  /** 顶部品牌位：`logo` 为彩色 Archer SVG，`wordmark` 为文字（默认） */
+  brand?: 'wordmark' | 'logo'
+  /** wordmark 位文案，默认 `app.wordmark` */
   title?: string
-  /** hint 位文案，默认官网的 "Loading plugins…" */
+  /** hint 位文案，默认 `status.loading_plugins` */
   subtitle?: string
   /** 进度百分比（0-100），传入则显示进度条 */
   percentage?: number
@@ -40,6 +37,7 @@ export interface LoadableProps {
 
 export function Loadable({
   icon: Icon,
+  brand = 'wordmark',
   title,
   subtitle,
   percentage,
@@ -54,17 +52,23 @@ export function Loadable({
   const hint = error ? errorMsg : subtitle ?? t('status.loading_plugins')
   const hasLogs = logs != null
   const showPanel = hasLogs || percentage != null
+  const showLogo = brand === 'logo' && !error
 
   return (
     <div className="flex h-full items-center justify-center bg-load-bg -mt-[1px]">
       <div className="flex w-[min(460px,88vw)] flex-col items-center gap-4 text-center">
-        {/* 加载态显示 spinner 时隐藏图标（官方 boot 页即无图标），避免与 spinner 重复突兀；仅失败态显示 */}
-        {/* 加载态显示 spinner 时隐藏图标（官方 boot 页即无图标），避免与 spinner 重复突兀；仅失败态显示 */}
         <If cond={error && Icon != null}>
           {Icon != null && <Icon className="size-7 text-load-ink" />}
         </If>
 
-        <span className="text-base leading-6 font-semibold tracking-[0.08em] text-load-ink truncate">{wordmark}</span>
+        <If
+          cond={showLogo}
+          else={(
+            <span className="text-base leading-6 font-semibold tracking-[0.08em] text-load-ink truncate">{wordmark}</span>
+          )}
+        >
+          <img src="/favicon.svg" alt={t('app.logo_alt')} className="size-14" />
+        </If>
 
         <If
           cond={error}

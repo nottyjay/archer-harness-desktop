@@ -907,23 +907,6 @@ describe('sandbox escalation API (write/edit)', () => {
     }])
   })
 
-  it('an equal-mode edit request is a no-op without an approval service', async () => {
-    const { ctx, fs } = await setupConfining()
-    const agent = escalationAgent([{ type: 'sandbox/mode', data: { mode: 'danger-full-access' } }])
-    fs.files.set('key:a.txt', 'old')
-    await call(ctx, 'read', { file_path: 'a.txt' }, agent)
-    const result = await call(ctx, 'edit', {
-      file_path: 'a.txt',
-      old_string: 'old',
-      new_string: 'new',
-      sandbox_permissions: 'danger-full-access',
-      justification: 'the session already grants this mode',
-    }, agent)
-    expect(result.isError).toBe(false)
-    expect(fs.files.get('key:a.txt')).toBe('new')
-    expect(fs.stamped[0]).toMatchObject({ mode: 'danger-full-access' })
-  })
-
   it('a denied write maps to the shared marker plus the escalation hint (isError)', async () => {
     const { ctx, fs } = await setupConfining()
     fs.rejectWith = new FsError('denied', 'FS_SANDBOX_DENIED')

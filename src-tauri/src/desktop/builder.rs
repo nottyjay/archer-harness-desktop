@@ -106,8 +106,8 @@ pub fn setup(app_handle: tauri::AppHandle) {
 
 /// setup tray
 pub fn tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
-    // 常驻图标使用带实心背景的普通 RGBA 图，不使用 macOS template 语义。
-    // 这避免菜单栏把高透明前景再次按系统材质处理后变得几乎不可见。
+    // macOS 26 菜单栏会给非 template 图标垫一层玻璃底板。
+    // 再叠不透明深色底就会变成黑块；常态图标走 template，由系统按菜单栏明暗着色。
     let icon = crate::desktop::tray::initial_icon(app);
 
     // 构建菜单
@@ -142,7 +142,7 @@ pub fn tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     // 固定托盘 ID，供通知状态机更新图标。
     let _ = TrayIconBuilder::with_id(crate::desktop::tray::TRAY_ICON_ID)
         .icon(icon)
-        .icon_as_template(false)
+        .icon_as_template(cfg!(target_os = "macos"))
         .menu(&menu)
         .show_menu_on_left_click(false)
         .tooltip("Archer")

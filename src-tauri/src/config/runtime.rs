@@ -420,7 +420,7 @@ pub fn get_dsh_package_json_path<R: Runtime>(app_handle: &AppHandle<R>) -> PathB
 
 /// 用户主目录（Windows 取 `%USERPROFILE%`，Unix 取 `$HOME`）。
 ///
-/// 不使用 dirs crate（未引入该依赖），与 Archer 的 `$HOME/.archer` 语义保持一致。
+/// 不使用 dirs crate（未引入该依赖），与官方 Harness 的 `$HOME/.dsh` 解析一致。
 fn user_home_dir() -> Option<PathBuf> {
     #[cfg(windows)]
     let key = "USERPROFILE";
@@ -429,28 +429,70 @@ fn user_home_dir() -> Option<PathBuf> {
     std::env::var_os(key).map(PathBuf::from)
 }
 
-/// Harness 用户数据目录（$DSH_HOME）。
-///
-/// 与 Archer（`${DSH_HOME:-$HOME/.archer}`）保持一致：
-/// - release 构建使用非空环境变量 `DSH_HOME`，否则默认 `~/.archer`；
-/// - debug 构建始终使用 `~/.archer.dev`，忽略从旧 desktop checkout、终端或 release
-///   shim 继承的 `DSH_HOME`，避免两个构建误用同一 profile 并发改写；
-/// - debug 子进程由 launch 显式收到同一个 `~/.archer.dev`，开发版与生产版的会话、档案、
-///   插件与主题因此互不干扰。
-pub fn get_dsh_data_path<R: Runtime>(_app_handle: &AppHandle<R>) -> PathBuf {
-    let dir_name = if cfg!(debug_assertions) {
-        DSH_HOME_DEV_DIR_NAME
-    } else {
-        if let Some(home) = std::env::var_os("DSH_HOME") {
-            if !home.is_empty() {
-                return PathBuf::from(home);
-            }
-        }
-        DSH_HOME_DIR_NAME
-    };
+fn join_user_home(dir_name: &str) -> PathBuf {
     user_home_dir()
         .map(|home| home.join(dir_name))
         .unwrap_or_else(|| PathBuf::from(dir_name))
+}
+
+/// Expand `~`, `~/…`, and `~\…` the same way `@deepseek-ai/dsh-home-paths` does.
+pub fn expand_home_path(path: &str) -> PathBuf {
+    if path == "~" {
+        return user_home_dir().unwrap_or_else(|| PathBuf::from("~"));
+    }
+    if let Some(rest) = path
+        .strip_prefix("~/")
+        .or_else(|| path.strip_prefix("~\\"))
+    {
+        return join_user_home(rest);
+    }
+    PathBuf::from(path)
+}
+
+/// Desktop default for `$DSH_HOME` before official Harness reads the env.
+///
+/// Official DSH still falls back to `~/.dsh`. We never change that: the
+/// desktop injects this path into the process instead.
+pub fn default_desktop_dsh_home() -> PathBuf {
+    if cfg!(debug_assertions) {
+        join_user_home(DSH_HOME_DEV_DIR_NAME)
+    } else {
+        join_user_home(DSH_HOME_DIR_NAME)
+    }
+}
+
+fn resolve_dsh_home_from(is_debug: bool, env_value: Option<&str>) -> PathBuf {
+    if is_debug {
+        return join_user_home(DSH_HOME_DEV_DIR_NAME);
+    }
+    match env_value.map(str::trim) {
+        Some(value) if !value.is_empty() => expand_home_path(value),
+        _ => join_user_home(DSH_HOME_DIR_NAME),
+    }
+}
+
+/// Inject `$DSH_HOME` into this process so bundled official Harness keeps
+/// its stock `~/.dsh` default.
+///
+/// Debug always overwrites with `~/.archer.dev`. Release only fills in
+/// `~/.archer` when the variable is unset or blank; a user-supplied value
+/// is kept (tilde-expanded to an absolute path).
+pub fn ensure_process_dsh_home() {
+    let resolved = resolve_dsh_home_from(cfg!(debug_assertions), env_dsh_home_raw().as_deref());
+    std::env::set_var("DSH_HOME", resolved);
+}
+
+fn env_dsh_home_raw() -> Option<String> {
+    std::env::var("DSH_HOME").ok()
+}
+
+/// Harness 用户数据目录（$DSH_HOME）。
+///
+/// 与官方 `resolveDshHome` 对齐：读 `$DSH_HOME`（空/空白视为未设置），否则用
+/// 桌面注入的默认值。调用前应先跑 `ensure_process_dsh_home`；未注入时仍回退到
+/// 同一套默认，避免测试/库路径漏设环境。
+pub fn get_dsh_data_path<R: Runtime>(_app_handle: &AppHandle<R>) -> PathBuf {
+    resolve_dsh_home_from(cfg!(debug_assertions), env_dsh_home_raw().as_deref())
 }
 
 /// dsh 服务日志文件路径
@@ -563,8 +605,8 @@ pub fn runtime_info<R: Runtime>(app: &AppHandle<R>, port: u16) -> RuntimeInfo {
         dsh_version: get_dsh_version(app),
         node_version: get_active_node_version(),
         service_url: get_dsh_service_url(port),
-        // 用户数据所在目录 = $DSH_HOME（release 为 ~/.archer，debug 为独立
-        // ~/.archer.dev，见 get_dsh_data_path），不再是 AppData
+        // 用户数据所在目录 = 进程内 `$DSH_HOME`（release 默认 ~/.archer，
+        // debug 固定 ~/.archer.dev；官方 CLI 仍默认 ~/.dsh）
         data_dir: get_dsh_data_path(app).to_string_lossy().into_owned(),
         log_path: get_service_log_path(app).to_string_lossy().into_owned(),
         platform: env::consts::OS.to_string(),
@@ -687,5 +729,46 @@ mod tests {
         assert_eq!(bundled_target_name("macos", "aarch64"), "darwin-aarch64");
         assert_eq!(bundled_target_name("linux", "x86_64"), "linux-x86_64");
         assert_eq!(bundled_target_name("windows", "x86_64"), "windows-x86_64");
+    }
+
+    #[test]
+    fn expand_home_path_matches_official_dsh() {
+        let home = user_home_dir().expect("home");
+        assert_eq!(expand_home_path("~"), home);
+        assert_eq!(expand_home_path("~/.dsh"), home.join(".dsh"));
+        assert_eq!(expand_home_path("~\\.dsh"), home.join(".dsh"));
+        assert_eq!(expand_home_path("/tmp/.dsh"), PathBuf::from("/tmp/.dsh"));
+        assert_eq!(
+            expand_home_path("~other/.dsh"),
+            PathBuf::from("~other/.dsh")
+        );
+    }
+
+    #[test]
+    fn debug_dsh_home_ignores_env_and_uses_archer_dev() {
+        assert_eq!(
+            resolve_dsh_home_from(true, Some("/tmp/explicit-dsh")),
+            join_user_home(DSH_HOME_DEV_DIR_NAME)
+        );
+    }
+
+    #[test]
+    fn release_dsh_home_prefers_env_then_archer() {
+        assert_eq!(
+            resolve_dsh_home_from(false, Some("/tmp/explicit-dsh")),
+            PathBuf::from("/tmp/explicit-dsh")
+        );
+        assert_eq!(
+            resolve_dsh_home_from(false, Some("~/env-dsh")),
+            join_user_home("env-dsh")
+        );
+        assert_eq!(
+            resolve_dsh_home_from(false, Some("   ")),
+            join_user_home(DSH_HOME_DIR_NAME)
+        );
+        assert_eq!(
+            resolve_dsh_home_from(false, None),
+            join_user_home(DSH_HOME_DIR_NAME)
+        );
     }
 }

@@ -6,9 +6,13 @@ mod service;
 mod task;
 mod utils;
 
-/// 应用入口：先做 Wayland 环境兼容（见 `should_apply_wayland_egl_workaround`），
-/// 再初始化日志、装配桌面端并进入事件循环。
+/// 应用入口：先注入 `$DSH_HOME`（官方 Harness 仍默认 `~/.dsh`），再做 Wayland
+/// 环境兼容（见 `should_apply_wayland_egl_workaround`），然后初始化日志、装配
+/// 桌面端并进入事件循环。
 pub fn run() {
+    // Official Harness still defaults to ~/.dsh. Inject Archer's home first so
+    // migrate / launch / shims all see the same $DSH_HOME as the bundled CLI.
+    config::ensure_process_dsh_home();
     // Wayland EGL workaround：仅 AppImage 需要（见 `should_apply_wayland_egl_workaround`）。
     if should_apply_wayland_egl_workaround(
         &std::env::var("XDG_SESSION_TYPE").unwrap_or_default(),

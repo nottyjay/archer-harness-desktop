@@ -258,7 +258,7 @@ export function Iframe({ iframeRef }: IframeProps) {
     <div className="relative min-h-0 flex-1">
       <If
         cond={serviceHealthy}
-        else={<Loadable subtitle={t(startupStatusKey)} />}
+        else={<Loadable brand="logo" subtitle={t(startupStatusKey)} />}
       >
         <iframe
           key={iframeKey}
