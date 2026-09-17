@@ -20,6 +20,7 @@ import { SlotOutlet } from '@deepseek-ai/dsh-client-ui-renderer'
 import { mountStyle } from 'dsh-tauri-ui/client'
 import { PANEL_STYLE_ID } from './constants'
 import { registerPanelLocale } from './locales'
+import { registerBrand } from './register/brand'
 import { registerPanelService } from './register/panel-service'
 import { registerSidebarRoot } from './register/sidebar'
 import { createPanelList } from './service/panel-list'
@@ -52,6 +53,7 @@ export function apply(ctx: ClientContext): void {
     'dsh-tauri-panel: styles',
   )
   registerPanelLocale(ctx)
+  registerBrand(ctx)
   // 官方全局面板（sidebar.panellist）的行投影：克隆侧栏的入口清单数据源。
   const panelList = createPanelList(ctx)
   // 面板协议宿主服务（panel.protocol：ActionItem + registerPanel + 内容区替换）：

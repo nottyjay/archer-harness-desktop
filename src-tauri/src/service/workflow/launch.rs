@@ -444,6 +444,11 @@ pub async fn launch(app_handle: tauri::AppHandle) -> Result<(), String> {
     if let Err(e) = crate::service::patch::client_hmr::apply(&app_handle) {
         log::warn!("client plugin reload fallback patch failed: {e}");
     }
+    // EmptyHero 标题不是 slot；把上游「探索未至之境」换成应用名。debug 与
+    // release 都打活动核心的已构建 client bundle，不改 vendor。
+    if let Err(e) = crate::service::patch::hero_i18n::apply(&app_handle) {
+        log::warn!("hero headline i18n patch failed: {e}");
+    }
     // 预防性处理：pnpm 在无 TTY 环境（dsh-market 等子进程）下重装/更新插件时，
     // 清理/重建 node_modules 会触发交互确认并因无 TTY 直接中止
     // （ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY），表现为插件更新失败。

@@ -12,6 +12,14 @@ export const PANEL_PROTOCOL_SERVICE = 'panel.protocol'
  * **兼容/私有协议**：旧核心主机、以及直接调 `ActionItem` 的存量第三方插件继续可用。
  */
 export const PANEL_ACTION_SLOT = 'sidebar.panel.action'
+/** 官方侧栏品牌标（single）；本插件以 priority -1 占用。 */
+export const BRAND_MARK_SLOT = 'sidebar.brand.mark'
+/** 官方侧栏品牌名（single）；本插件以 priority -1 占用。 */
+export const BRAND_NAME_SLOT = 'sidebar.brand.name'
+/** 空态会话 hero 品牌标（single）；官方构建不占用，回退是动画鱼。 */
+export const HERO_BRAND_MARK_SLOT = 'conversation.hero.brand.mark'
+export const BRAND_PRIORITY = -1
+export const BRAND_APP_NAME = 'Archer'
 /**
  * 官方「全局面板」清单槽（≥0.1.5-rc.1）：`list` / `root`。
  *

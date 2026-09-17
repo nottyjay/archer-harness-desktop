@@ -6,10 +6,11 @@
 //! 统一处理，避免每个补丁重复这份样板。
 //!
 //! 命名约定：子模块名不带 `_patch` 后缀（`renderer` / `session` / `workspace` /
-//! `client_hmr`），挂点统一为 `service::workflow::launch`，均为最佳努力、失败仅告警。
+//! `client_hmr` / `hero_i18n`），挂点统一为 `service::workflow::launch`，均为最佳努力、失败仅告警。
 
 pub(crate) mod alpha_auth;
 pub(crate) mod client_hmr;
+pub(crate) mod hero_i18n;
 pub(crate) mod renderer;
 pub(crate) mod session;
 pub(crate) mod workspace;
