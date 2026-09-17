@@ -23,5 +23,6 @@
     "skipLibCheck": true
   },
   "references": [{ "path": "./tsconfig.node.json" }],
-  "include": ["src", "packages/*/src", "types"]
+  "include": ["src", "packages/*/src", "types"],
+  "exclude": ["packages/dsh-better-sidebar", "packages/dsh-rewind-plugin"]
 }

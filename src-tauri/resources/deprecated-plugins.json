@@ -1,5 +1,6 @@
 [
   "dsh-win-terminal-inspector",
   "dsh-session-context-menu",
-  "dsh-notification"
+  "dsh-notification",
+  "dsh-tauri-pet"
 ]

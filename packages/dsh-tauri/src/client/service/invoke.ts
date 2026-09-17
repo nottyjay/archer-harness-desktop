@@ -36,7 +36,7 @@ function nextNonce(): string {
  * 便于把 `import { invoke } from '@tauri-apps/api/core'` 原地换成此实现；
  * `options.headers` 不被桥转发（宿主直接调用 command），仅为签名一致而保留。
  *
- * @param cmd Tauri command 名（如 `get_pet_status`）
+ * @param cmd Tauri command 名（如 `plugin:app|version`）
  * @param args command 参数（对象 / 数字数组 / ArrayBuffer / Uint8Array）
  * @typeParam T command 成功返回值的类型
  */

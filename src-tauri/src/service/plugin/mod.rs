@@ -1,4 +1,4 @@
-//! 预装插件：首次启动引导安装官方推荐插件（当前为 DSH Market）。
+//! 预装插件：首次启动引导安装官方推荐插件。
 //!
 //! 安装通过 `dsh plugin --profile <当前档案> add <pkg>` 完成：该子命令是 pnpm
 //! 转发器，会在 `$DSH_HOME/profiles/<当前档案>` 初始化 profile 并执行 `pnpm add`，

@@ -525,11 +525,15 @@ pub(crate) fn current_preset_hash(app_handle: &AppHandle) -> Option<String> {
 }
 
 /// 是否需要进入预装插件引导：
+/// - 引导清单为空（只剩预置/内置项）→ 不弹
 /// - 引导从未完成（首启/中途退出）→ 需要
 /// - 老用户升级无指纹基线（文件在）→ 弹一次建立基线
 /// - 有基线且内容已变更 → 需要
 /// - 文件缺失视为无变化，避免每次启动都弹空引导
 pub(crate) fn preinstall_pending(app_handle: &AppHandle) -> bool {
+    if super::installed::list(app_handle).is_empty() {
+        return false;
+    }
     let setting = config::get_store_dat_setting(app_handle);
     if !setting.preinstall_done {
         return true;
@@ -567,17 +571,9 @@ mod tests {
     }
 
     #[test]
-    fn preset_list_contains_dshmarket() {
+    fn preset_list_is_empty_after_shipping_sidebar_and_rewind_internally() {
         let presets = load_presets_for_test();
-        assert!(presets.iter().any(|p| p.id == "dshmarket"));
-        assert_eq!(
-            presets
-                .iter()
-                .find(|p| p.id == "dshmarket")
-                .map(|p| p.repo_url.as_str()),
-            Some("https://github.com/dsh-market/dsh-market")
-        );
-        assert!(!presets.iter().any(|p| p.id == "unknown-package"));
+        assert!(presets.is_empty());
     }
 
     #[test]
@@ -597,6 +593,9 @@ mod tests {
         assert!(!plugins.is_empty());
         assert!(plugins.iter().all(|plugin| plugin.internal));
         assert!(plugins.iter().any(|plugin| plugin.id == "dsh-tauri"));
+        assert!(plugins.iter().any(|plugin| plugin.id == "dsh-better-sidebar"));
+        assert!(plugins.iter().any(|plugin| plugin.id == "dsh-rewind-plugin"));
+        assert!(!plugins.iter().any(|plugin| plugin.id == "dsh-tauri-pet"));
         assert!(!load_presets_for_test().iter().any(|plugin| plugin.internal));
     }
 
@@ -667,6 +666,7 @@ mod tests {
         let raw = std::fs::read_to_string(path).expect("deprecated manifest should exist");
         let ids = parse_deprecated_ids(&raw).expect("deprecated manifest should be valid JSON");
         assert!(ids.contains("dsh-session-context-menu"));
+        assert!(ids.contains("dsh-tauri-pet"));
     }
 
     #[test]

@@ -23,7 +23,7 @@ export interface UseInvokeResult<T> {
  * - 失败不静默：登记到 `error`，调用方决定展示方式（同时 console 一条便于排查）。
  *
  * @example
- * const { data: pets, loading } = useInvoke<PetListItem[]>('list_pets', { source: 'chat' })
+ * const { data: version, loading } = useInvoke<string>('plugin:app|version')
  */
 export function useInvoke<T>(cmd: string, args?: InvokeArgs, options?: InvokeOptions): UseInvokeResult<T> {
   const [data, setData] = useState<T | null>(null)

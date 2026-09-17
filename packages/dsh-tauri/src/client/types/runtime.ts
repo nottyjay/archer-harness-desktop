@@ -16,7 +16,7 @@ export type WorkspacesRuntime = IWorkspaces & { startSession?: (workspaceId?: Wo
 
 /**
  * workspace 共享的宽松运行时面（ctx.sessions / ctx.workspaces 投影）。
- * 消费插件（dsh-tauri-session / dsh-tauri-rightclick / dsh-tauri-pet）统一从
+ * 消费插件（dsh-tauri-session / dsh-tauri-rightclick）统一从
  * `dsh-tauri/client` 引用，不再各自声明重复面，也不重复 `as unknown as` 断言
  * （断言目标统一为此处类型）。未知成员用宽松签名，需要官方精确面时用上面的
  * SessionsRuntime / WorkspacesRuntime Pick。

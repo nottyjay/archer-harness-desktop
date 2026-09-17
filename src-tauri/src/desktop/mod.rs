@@ -5,8 +5,6 @@ pub mod compat;
 pub mod notification;
 pub mod paste;
 pub mod payload;
-pub mod pet;
-pub mod pet_mouse;
 pub mod plugin_boot;
 pub mod tray;
 pub mod window;

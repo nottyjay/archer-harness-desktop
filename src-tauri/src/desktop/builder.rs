@@ -507,32 +507,6 @@ mod security_tests {
     }
 
     #[test]
-    fn pet_http_scope_is_limited_to_remote_asset_hosts() {
-        // 桌宠窗口经插件版 fetch 直连远端素材（绕开 githubusercontent 的 CORS），
-        // 但 scope 必须收口到素材主机：出现任意 https 通配等于把插件 fetch 面
-        // 整个开放给桌宠窗口。
-        let capability = capability();
-        let permissions = capability["permissions"]
-            .as_array()
-            .expect("permissions must be an array");
-        let mut scoped: Vec<String> = Vec::new();
-        for permission in permissions {
-            let Some(allow) = permission.get("allow").and_then(Value::as_array) else {
-                continue;
-            };
-            for entry in allow {
-                if let Some(url) = entry.get("url").and_then(Value::as_str) {
-                    scoped.push(url.to_string());
-                }
-            }
-        }
-        assert_eq!(
-            scoped,
-            vec!["https://*.githubusercontent.com/*".to_string()]
-        );
-    }
-
-    #[test]
     fn webview_security_features_are_not_disabled() {
         let source = include_str!("builder.rs");
         let smart_screen = ["ms", "SmartScreen", "Protection"].concat();
@@ -620,25 +594,12 @@ pub fn handler() -> impl Fn(Invoke<Wry>) -> bool + Send + Sync + 'static {
         crate::desktop::notification::show_native_notification,
         crate::desktop::tray::clear_tray_notifications,
         crate::bridge::log_frontend,
-        crate::bridge::get_pet_status,
-        crate::bridge::set_pet_enabled,
-        crate::bridge::set_active_pet,
-        crate::bridge::set_pet_size,
-        crate::bridge::push_pet_session,
-        crate::bridge::move_pet_window,
-        crate::bridge::set_pet_ignore_cursor_events,
-        crate::bridge::list_pets,
-        crate::bridge::import_pet,
-        crate::bridge::get_pet_asset,
-        crate::bridge::list_preset_pets,
-        crate::desktop::pet_mouse::start_pet_mouse_stream,
     ]
 }
 
 // configure tauri builder
 pub fn builder() -> tauri::Builder<tauri::Wry> {
     let builder = tauri::Builder::default()
-        .manage(crate::desktop::pet_mouse::PetMouseStreamState::default())
         .setup(|app| {
             let app_handle = app.handle().clone();
             app.manage(crate::desktop::tray::TrayIconState::new(&app_handle));
@@ -650,16 +611,7 @@ pub fn builder() -> tauri::Builder<tauri::Wry> {
             #[cfg(target_os = "macos")]
             install_macos_menu(&app_handle)?;
             tray(&app_handle)?;
-            // 桌宠窗口：按「是否启用」设置惰性创建/显示（幂等）。
-            crate::desktop::pet::init_pet_window(&app_handle);
             setup(app_handle.clone());
-            // 方案 1（host → rust → pet）：Rust 作为宿主会话增量 SSE 流的消费者，
-            // 不再依赖 iframe 的 invoke 桥转发（#396 根因）。断连自动重连；
-            // 仅当桌宠已启用且可见才订阅——关闭桌宠则宿主不做任何转发。
-            crate::bridge::pet::sync_pet_session_stream(
-                &app_handle,
-                crate::bridge::pet::pet_stream_wanted(&app_handle),
-            );
             Ok(())
         })
         .on_menu_event(|app, event| match event.id().as_ref() {
@@ -683,17 +635,6 @@ pub fn builder() -> tauri::Builder<tauri::Wry> {
         // 点击关闭按钮时按设置决定：隐藏到托盘驻留，还是完整退出程序
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
-                if window.label() == crate::desktop::pet::PET_WINDOW_LABEL {
-                    // 桌宠窗口没有装饰按钮，但 Alt+F4 / 系统关闭仍会走到这里：语义等同
-                    // 「关闭宠物」——持久化 enabled=false 并销毁窗口（与会话流一起收口）。
-                    // 走命令本身而不是内部函数：关闭是持久动作，重启后不该再自己起来。
-                    api.prevent_close();
-                    let handle = window.app_handle().clone();
-                    if let Err(error) = crate::bridge::pet::set_pet_enabled(handle, false) {
-                        log::warn!("[pet] PET_WINDOW_DESTROY_FAILED: {error}");
-                    }
-                    return;
-                }
                 // get_store_dat_setting 内部已归一化，取值只可能是 tray 或 quit
                 let close_action =
                     crate::config::get_store_dat_setting(&window.app_handle()).close_action;
@@ -733,24 +674,9 @@ pub fn builder() -> tauri::Builder<tauri::Wry> {
                 let _ = window.hide();
             }
             // 移动/缩放主窗口时记录几何，重启后据此恢复（见 config::window_state）
-            tauri::WindowEvent::Moved(_) => match window.label() {
-                label if label == crate::desktop::pet::PET_WINDOW_LABEL => {
-                    crate::desktop::pet::save_pet_window_geometry(window);
-                }
-                _ => crate::config::save_geometry(window),
-            },
-            tauri::WindowEvent::ScaleFactorChanged { .. } => {
-                if window.label() == crate::desktop::pet::PET_WINDOW_LABEL {
-                    crate::desktop::pet::apply_pet_size(&window.app_handle());
-                }
-            }
+            tauri::WindowEvent::Moved(_) => crate::config::save_geometry(window),
             tauri::WindowEvent::Resized(_) => {
-                match window.label() {
-                    label if label == crate::desktop::pet::PET_WINDOW_LABEL => {
-                        crate::desktop::pet::save_pet_window_geometry(window);
-                    }
-                    _ => crate::config::save_geometry(window),
-                }
+                crate::config::save_geometry(window);
                 #[cfg(target_os = "macos")]
                 sync_macos_fullscreen_menu(window);
                 // 退出全屏后补做全屏期间被推迟的 Accessory 切换
@@ -786,9 +712,6 @@ pub fn builder() -> tauri::Builder<tauri::Wry> {
         .plugin(tauri_plugin_notification::init())
         // FS plugin
         .plugin(tauri_plugin_fs::init())
-        // HTTP plugin：桌宠窗口拉取远端宠物素材时把 fetch 交给 Rust 发起，
-        // 绕开 raw.githubusercontent.com 不返回 CORS 头导致的浏览器拦截。
-        .plugin(tauri_plugin_http::init())
         // Simple Store plugin
         .plugin(tauri_plugin_store::Builder::new().build())
         // OS plugin：前端据此判断系统版本（macOS 10.15 没有 `WKWebView.pageZoom`，

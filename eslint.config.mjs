@@ -8,6 +8,8 @@ export default antfu({
   ignores: [
     'AGENTS.*',
     'docs',
+    'packages/dsh-better-sidebar/**',
+    'packages/dsh-rewind-plugin/**',
   ],
 }, {
   // 插件包是库包而非应用壳：client 侧文件按 host/client 双面设计，

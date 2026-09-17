@@ -56,17 +56,24 @@
     "repoUrl": "https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-session"
   },
   {
-    "id": "dsh-tauri-pet",
-    "spec": "dsh-tauri-pet",
-    "name": "DSH Tauri Pet",
-    "description": "Persistent animated desktop pets with conversation activity states, bubbles, and Chat/Codex pet libraries.",
-    "repoUrl": "https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-pet"
-  },
-  {
     "id": "dsh-tauri-rightclick",
     "spec": "dsh-tauri-rightclick",
     "name": "DSH Tauri Rightclick Menu",
     "description": "Native-style right-click context menu for the desktop shell: quick actions for sessions, workspaces, conversation text, links, and inputs — in-house successor to the deprecated dsh-session-context-menu.",
     "repoUrl": "https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-rightclick"
+  },
+  {
+    "id": "dsh-better-sidebar",
+    "spec": "dsh-better-sidebar",
+    "name": "DSH Better Sidebar",
+    "description": "A VSCode-like right sidebar (explorer / editor / terminal / git / browser), isolated per conversation session. Exposes a service for other plugins to register sidebar tabs and file viewers.",
+    "repoUrl": "https://github.com/omdsh-dev/DSH-better-sidebar"
+  },
+  {
+    "id": "dsh-rewind-plugin",
+    "spec": "dsh-rewind-plugin",
+    "name": "DSH Rewind",
+    "description": "In-window conversation rewind that never forks a new session, with a lightweight workspace backup that restores files together with the rewind.",
+    "repoUrl": "https://github.com/SiriLee/dsh-rewind"
   }
 ]

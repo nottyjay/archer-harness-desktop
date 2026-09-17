@@ -76,7 +76,8 @@ Plugins propios incluidos con el instalador:
 - [DSH Tauri Panel Scheduler](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-panel-scheduler) — crea tareas programadas diarias, por intervalo, días hábiles y semanales; las ejecuta en sesiones Agent independientes y conserva el historial
 - [DSH Tauri Turn Rewind](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-turnrewind) — registra snapshots Git privados por turno del Agent, muestra tarjetas de cambios y revierte un turno de forma segura con protección de conflictos
 - [DSH Tauri Session](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-session) — reemplaza el borrado de workspaces por archivado y agrega una página de chats archivados con búsqueda, orden, agrupado, filtro por proyecto y restauración
-- [DSH Tauri Pet](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-pet) — administra mascotas Chat / Codex, descargas de presets, importación de paquetes y estados de actividad
+- [DSH Better Sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) — barra lateral derecha incluida (explorador / editor / terminal / git / navegador)
+- [DSH Rewind](https://github.com/SiriLee/dsh-rewind) — rebobinado de conversación en la misma ventana, con restauración de archivos del workspace
 - [DSH Tauri Rightclick](https://github.com/nottyjay/archer-harness-desktop/tree/main/packages/dsh-tauri-rightclick) — menús contextuales estilo nativo para sesiones, workspaces, texto, enlaces y entradas
 - Más plugins en camino...
 
@@ -163,9 +164,6 @@ El paquete Harness prearmado lo publica [deepseek-harness-pkg](https://github.co
 
 Recursos remotos y catálogos oficiales que los plugins consumen en tiempo de ejecución:
 
-- [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) — recursos de las mascotas predefinidas (movimientos WebM, GIF de vista previa, `config.jsonc`); `preset-pets.json` fija `e1ff8c1`
-- [dsh-tauri-desk/dsh-pet-mov](https://github.com/dsh-tauri-desk/dsh-pet-mov) — espejo `.mov` HEVC-alpha para macOS (WKWebView no soporta VP9-alpha), fijado en `be0f3bb`
-- [hairyf/dsh-pet-component](https://github.com/hairyf/dsh-pet-component) — componente de render de la mascota (npm `dsh-pet-component`)
 - [qinyre/dsh-plugin-capabilities](https://github.com/qinyre/dsh-plugin-capabilities) — upstream del gestor de Skills / MCP, fijado en `3412f8d`
 - [anthropics/skills](https://github.com/anthropics/skills) / [vercel-labs/skills](https://github.com/vercel-labs/skills) — origen de los `skill-creator` / `find-skills` incluidos
 
@@ -173,11 +171,6 @@ Recursos remotos y catálogos oficiales que los plugins consumen en tiempo de ej
 
 Repositorios de referencia clonados en `source/` según los necesita cada plugin; la mayoría no se versiona en este repositorio:
 
-- [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) — pesos de movimiento, reproducción continua y estilo de burbujas (submódulo)
-- [Skylarking/dsh-plugin-codex-pets](https://github.com/Skylarking/dsh-plugin-codex-pets) — atlas de mascotas Codex y mapeo de estado de sesión (submódulo)
-- [ayangweb/BongoCat](https://github.com/ayangweb/BongoCat) — referencia de ventana Tauri, arrastre nativo, DPI y paso del ratón (submódulo)
-- [QCYTSN/dsh-dafeiyu](https://github.com/QCYTSN/dsh-dafeiyu) — referencia de textos de burbuja y prioridad de estados (submódulo)
-- [Signalight/codex-to-dsh-pet](https://github.com/Signalight/codex-to-dsh-pet) — atlas Codex v2, prioridad de acciones y mapeo de estado de sesión
 - [Anionex/dsh-turn-rewind](https://github.com/Anionex/dsh-turn-rewind) / [Willmylife/dsh-rewind](https://github.com/Willmylife/dsh-rewind) — instantáneas por turno, clasificación de conflictos y referencia de deshacer
 - [a179-sanae/dsh-auto-collapse](https://github.com/a179-sanae/dsh-auto-collapse) / [Laplace-bit/dsh-smooth-stream](https://github.com/Laplace-bit/dsh-smooth-stream) — sondeo de capacidades opcionales y referencia de compatibilidad entre núcleos
 

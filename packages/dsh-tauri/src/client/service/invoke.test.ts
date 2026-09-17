@@ -61,13 +61,13 @@ describe('dsh-tauri invoke', () => {
   }
 
   it('成功应答时 resolve，并立刻清理超时计时器', async () => {
-    const promise = invoke<{ enabled: boolean }>('get_pet_status', { a: 1 })
+    const promise = invoke<{ enabled: boolean }>('plugin:app|version', { a: 1 })
     // postMessage 发出请求，且只留有这一个超时计时器（正是要清理的目标）
     expect(vi.getTimerCount()).toBe(1)
     const request = postedRequest()
     expect(request.source).toBe('dsh-tauri-invoke')
     expect(request.type).toBe('dsh://tauri:invoke')
-    expect(request.cmd).toBe('get_pet_status')
+    expect(request.cmd).toBe('plugin:app|version')
     expect(typeof request.nonce).toBe('string')
     expect(request.nonce).toMatch(new RegExp(`^${PLUGIN_ID}:\\d+$`))
 
@@ -79,7 +79,7 @@ describe('dsh-tauri invoke', () => {
   })
 
   it('错误应答时 reject，并清理超时计时器与监听器', async () => {
-    const promise = invoke('set_pet_enabled', { enabled: true })
+    const promise = invoke('open_external_url', { url: 'https://example.com' })
     const request = postedRequest()
     expect(vi.getTimerCount()).toBe(1)
 
@@ -93,13 +93,13 @@ describe('dsh-tauri invoke', () => {
   })
 
   it('宿主 15s 未应答时超时 reject，且无残留计时器', async () => {
-    const promise = invoke('get_pet_status')
+    const promise = invoke('plugin:app|version')
     postedRequest()
     expect(vi.getTimerCount()).toBe(1)
 
     vi.advanceTimersByTime(INVOKE_TIMEOUT_MS)
 
-    await expect(promise).rejects.toThrow('NODE_NOT_ANSWERED: invoke get_pet_status timed out')
+    await expect(promise).rejects.toThrow('NODE_NOT_ANSWERED: invoke plugin:app|version timed out')
     expect(vi.getTimerCount()).toBe(0)
   })
 
@@ -107,7 +107,7 @@ describe('dsh-tauri invoke', () => {
     parent.postMessage.mockImplementation(() => {
       throw new Error('DataCloneError: stored value cannot be cloned')
     })
-    const promise = invoke('get_pet_status', { session: { loop: true } })
+    const promise = invoke('open_external_url', { session: { loop: true } })
     // postMessage 抛错时不应发出任何东西，计时器也必须被清除
     await expect(promise).rejects.toThrow('DataCloneError')
     expect(vi.getTimerCount()).toBe(0)

@@ -602,12 +602,12 @@ mod tests {
         let profile = build_profile("patch-collect", "j");
         write_patch(
             &profile,
-            "- id: dshmarket\n  disabled: true\n- id: dsh-better-sidebar\n  disabled: false\n- id: dsh-tauri-pet\n  config: 1\n- plain-string\n",
+            "- id: dshmarket\n  disabled: true\n- id: dsh-better-sidebar\n  disabled: false\n- id: dsh-example-plugin\n  config: 1\n- plain-string\n",
         );
         let targets = load_patch_disabled(&profile);
         assert!(targets.contains("dshmarket"));
         assert!(!targets.contains("dsh-better-sidebar"));
-        assert!(!targets.contains("dsh-tauri-pet"));
+        assert!(!targets.contains("dsh-example-plugin"));
 
         // 缺文件/非法 YAML/非数组 → 空集
         assert!(load_patch_disabled(&std::env::temp_dir()).is_empty());
@@ -641,14 +641,14 @@ mod tests {
         let profile = build_profile("patch-strip", "m");
         write_patch(
             &profile,
-            "- id: dsh-better-sidebar\n  disabled: true\n- id: dshmarket\n  disabled: true\n- id: dsh-tauri-pet\n  foo: bar\n",
+            "- id: dsh-better-sidebar\n  disabled: true\n- id: dshmarket\n  disabled: true\n- id: dsh-example-plugin\n  foo: bar\n",
         );
         enable_plugin_at(&profile, "dsh-better-sidebar", true).unwrap();
 
         let content = fs::read_to_string(profile.join("cordis.patch.yml")).unwrap();
         assert!(!content.contains("dsh-better-sidebar"));
         assert!(content.contains("dshmarket"));
-        assert!(content.contains("dsh-tauri-pet"));
+        assert!(content.contains("dsh-example-plugin"));
         assert!(content.contains("foo: bar"));
         // 其余禁用条目仍是禁用态
         let targets = load_patch_disabled(&profile);

@@ -23,8 +23,7 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [
   "tray-icon",
   "image-png",
-  "devtools",
-  "macos-private-api"
+  "devtools"
 ] }
 tauri-plugin-single-instance = "2"
 tauri-plugin-opener = "2"
@@ -32,10 +31,6 @@ tauri-plugin-fs = "2"
 tauri-plugin-store = "2"
 tauri-plugin-notification = "2"
 tauri-plugin-autostart = "2"
-# 桌宠素材直连远端：插件版 HTTP 从 Rust 发起请求，绕开 githubusercontent 的 CORS。
-# 版本须与 package.json 的 @tauri-apps/plugin-http（catalog:tauri，^2.6.0）保持同一 minor：
-# tauri CLI 会在构建前校验 NPM 包与 Rust crate 的 major/minor 是否一致，不一致直接退出。
-tauri-plugin-http = "2.6"
 # 前端读取系统版本（`@tauri-apps/plugin-os` 的 `type()` / `version()`）用于缩放的平台判定。
 # 版本须与 package.json 的 @tauri-apps/plugin-os（catalog:tauri，^2.3.2）保持同一 minor：
 # tauri CLI 会在构建前校验 NPM 包与 Rust crate 的 major/minor 是否一致，不一致直接退出。
@@ -62,7 +57,6 @@ reqwest = { version = "0.12", features = [
   "json",
   "stream"
 ] }
-rdev = "0.5.3"
 zip = "0.6"
 futures-util = "0.3"
 flate2 = "1"
@@ -84,12 +78,6 @@ objc2-foundation = { version = "=0.3.2", default-features = false, features = [
   "NSObject",
   "NSProcessInfo",
 ] }
-# CGEventTap 直监听：绕开 rdev 0.5.3 在 macOS 上对 KeyPress 事件无条件调
-# TSMGetInputSourceProperty（必须 main queue）导致的 dispatch_assert_queue SIGTRAP。
-# 见 issue #397。core-graphics / core-foundation 在 rdev 传递依赖里已有，
-# 不引入新的下载源。
-core-graphics = "0.25"
-core-foundation = "0.9"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

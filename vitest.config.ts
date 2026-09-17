@@ -24,10 +24,7 @@ export default defineConfig({
     include: [
       'packages/**/*.{test,spec}.{ts,tsx,js,mjs,cjs}',
       'test/toast.test.ts',
-      // issue #469：桌面端不得持有屏幕唤醒锁（壳层用 reause useWakeLock 释放，桌宠 <video> 会间接加锁）。
       'test/wake-lock.test.ts',
-      // issue #469：收起桌宠必须是销毁窗口（隐藏窗口里的视频仍在播放并持锁）。
-      'test/pet-window-lifecycle.test.ts',
       'test/plugin-load-local.test.ts',
     ],
     maxWorkers: 4,

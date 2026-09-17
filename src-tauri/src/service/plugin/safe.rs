@@ -168,18 +168,22 @@ mod tests {
 
     #[test]
     fn shipped_internal_manifest_is_protected() {
-        // 随包内置插件清单（dsh-tauri 等）必须全部落在保留集里；社区预设
-        // （dshmarket 等）属于用户插件，进入清除清单。
+        // 随包内置插件清单（dsh-tauri / better-sidebar / rewind 等）必须全部
+        // 落在保留集里；不再随包分发的社区预设清单应为空。
         let builtin = manifest_package_names("internal-plugins.json");
         let presets = manifest_package_names("preset-plugins.json");
         assert!(builtin.iter().any(|name| name == "dsh-tauri"));
-        assert!(presets.iter().any(|name| name == "dshmarket"));
+        assert!(builtin.iter().any(|name| name == "dsh-better-sidebar"));
+        assert!(builtin.iter().any(|name| name == "dsh-rewind-plugin"));
+        assert!(presets.is_empty());
+        assert!(!builtin.iter().any(|name| name == "dsh-tauri-pet"));
+        assert!(!presets.iter().any(|name| name == "dshmarket"));
 
         let mut installed: HashSet<String> = builtin.iter().cloned().collect();
-        installed.extend(presets.iter().cloned());
+        installed.insert("dsh-user-plugin".to_string());
         let purged = user_plugin_names(&installed, &builtin.iter().cloned().collect());
 
         assert!(!purged.iter().any(|name| builtin.contains(name)));
-        assert!(purged.contains(&"dshmarket".to_string()));
+        assert!(purged.contains(&"dsh-user-plugin".to_string()));
     }
 }
