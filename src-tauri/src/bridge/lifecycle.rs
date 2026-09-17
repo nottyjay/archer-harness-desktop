@@ -44,12 +44,16 @@ fn sync_cli_link(app_handle: &AppHandle) {
 }
 
 fn require_bundled_runtime(app_handle: &AppHandle) -> Result<(), String> {
-    if config::bundled_node_binary(app_handle).is_none() {
+    let Some(node) = config::bundled_node_binary(app_handle) else {
         return Err(
             "NODE_BUNDLED_RESOURCE_MISSING: bundled Node.js is missing from this installer"
                 .to_string(),
         );
-    }
+    };
+    // 文件存在 ≠ 能 exec：资源被原地覆写后内核会以 SIGKILL 拦下 exec，这里就地
+    // 探测并自愈，否则失败会推迟到插件安装阶段，只留下一句无输出的 exit code 1
+    // （见 [`config::ensure_bundled_node_executable`]）。
+    config::ensure_bundled_node_executable(&node)?;
     if config::bundled_dsh_binary(app_handle).is_none() {
         return Err(
             "DSH_BUNDLED_RESOURCE_MISSING: compiled Harness resource is missing from this installer"

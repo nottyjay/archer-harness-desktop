@@ -289,10 +289,18 @@ pub(crate) async fn run_plugin_process(
             spawn_line_emitter(stderr, window.clone(), captured.clone());
         }
 
+        let node_label = node.display().to_string();
+        let captured_wait = captured.clone();
         let exit_code = tauri::async_runtime::spawn_blocking(move || {
             let _process_guard = process_guard;
             let _pid_guard = pid_guard;
-            child.wait().map(|s| s.code().unwrap_or(1)).unwrap_or(1)
+            match child.wait() {
+                Ok(status) => exit_code_of(status, &node_label, &captured_wait),
+                Err(e) => {
+                    log::error!("failed to wait for dsh plugin process: {e}");
+                    1
+                }
+            }
         })
         .await
         .map_err(|e| format!("PREINSTALL_WAIT: {e}"))?;
@@ -300,6 +308,32 @@ pub(crate) async fn run_plugin_process(
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         Ok((exit_code, drain_captured(captured)))
     }
+}
+
+/// 把子进程退出状态折叠成退出码，被信号杀死时返回 shell 约定的 `128 + signal`，
+/// 并把该事实写进日志与捕获缓冲。
+///
+/// `code()` 在信号终止时为 None，直接 `unwrap_or(1)` 会把「被信号杀死」伪装成普通
+/// 的 exit 1：macOS 在二进制被原地覆写后以 SIGKILL 拦下后续 exec 且不产生任何输出
+/// （见 [`crate::config::ensure_bundled_node_executable`]），上层拿到的就只有一句
+/// 无输出、无诊断的 `exit code 1`，无从排查。
+#[cfg(not(windows))]
+fn exit_code_of(status: std::process::ExitStatus, node: &str, captured: &Mutex<String>) -> i32 {
+    use std::os::unix::process::ExitStatusExt;
+
+    if let Some(code) = status.code() {
+        return code;
+    }
+    let Some(signal) = status.signal() else {
+        return 1;
+    };
+    log::error!("dsh plugin process was terminated by signal {signal}: {node}");
+    if let Ok(mut acc) = captured.lock() {
+        acc.push_str(&format!(
+            "error: NODE_EXEC_KILLED: node was terminated by signal {signal} ({node})\n"
+        ));
+    }
+    128 + signal
 }
 
 /// 取出（并清空）共享缓冲区中的全部捕获输出。
@@ -360,6 +394,41 @@ fn spawn_line_emitter<R: Read + Send + 'static>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// 被信号杀死的子进程不能伪装成普通 exit 1：退出码要带上信号，捕获缓冲里
+    /// 也要留下可被失败诊断挑中的行（否则前端只剩一句 `exit code 1`）。
+    #[cfg(not(windows))]
+    #[test]
+    fn signal_death_reports_the_signal_and_leaves_a_diagnostic() {
+        let status = Command::new("sh")
+            .arg("-c")
+            .arg("kill -9 $$")
+            .status()
+            .expect("sh should run");
+        let captured = Mutex::new(String::new());
+
+        assert_eq!(exit_code_of(status, "/bundled/node", &captured), 137);
+        let diagnostic = captured.into_inner().unwrap();
+        assert!(
+            diagnostic.contains("NODE_EXEC_KILLED") && diagnostic.contains("signal 9"),
+            "unexpected diagnostic: {diagnostic}"
+        );
+    }
+
+    /// 正常退出码原样透传，不被信号分支改写。
+    #[cfg(not(windows))]
+    #[test]
+    fn normal_exit_code_passes_through() {
+        let status = Command::new("sh")
+            .arg("-c")
+            .arg("exit 3")
+            .status()
+            .expect("sh should run");
+        let captured = Mutex::new(String::new());
+
+        assert_eq!(exit_code_of(status, "/bundled/node", &captured), 3);
+        assert!(captured.into_inner().unwrap().is_empty());
+    }
 
     #[test]
     fn stale_guard_cannot_clear_a_new_process_for_the_same_owner() {

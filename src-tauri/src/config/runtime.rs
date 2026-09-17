@@ -141,6 +141,83 @@ fn node_version_output(node: &Path) -> Option<std::process::Output> {
     }
 }
 
+/// 校验捆绑 Node 真的能被 exec，被内核签名缓存拦下时原子换出同名文件后重试。
+///
+/// macOS 按 vnode 缓存代码签名：二进制被原地覆写（`fs::copy` 是截断重写，不换
+/// inode）后旧缓存与新内容不再匹配，此后每次 exec 都被内核直接 SIGKILL，且不产生
+/// 任何输出。dev 下 tauri 每轮构建都把 `resources/**` 原地拷进
+/// `target/debug/resources`，只要上一轮残留的 dsh 服务还持有旧 vnode 就会落进该
+/// 状态——症状是插件安装静默失败（`dsh plugin exited with code 1`，输出为空），
+/// 与插件本身无关。用同字节的临时文件 rename 覆盖即可拿到新 vnode；内容不变，
+/// 因此代码签名与安装包资源封印都不受影响。
+///
+/// 只有信号终止才判为失败：其余异常（退出码非 0、spawn 失败）交给既有的运行时
+/// 探测链路，不在这里阻断启动。
+pub fn ensure_bundled_node_executable(node: &Path) -> Result<(), String> {
+    let Some(signal) = exec_killing_signal(node) else {
+        return Ok(());
+    };
+    log::warn!(
+        "bundled Node.js was killed by signal {signal} on exec, re-materializing: {}",
+        node.display()
+    );
+    if let Err(e) = rematerialize_file(node) {
+        return Err(format!(
+            "NODE_EXEC_KILLED: bundled Node.js at {} is killed by signal {signal} on exec and \
+             could not be re-materialized: {e}",
+            node.display()
+        ));
+    }
+    match exec_killing_signal(node) {
+        None => {
+            log::info!(
+                "bundled Node.js is executable again after re-materializing: {}",
+                node.display()
+            );
+            Ok(())
+        }
+        Some(signal) => Err(format!(
+            "NODE_EXEC_KILLED: bundled Node.js at {} is still killed by signal {signal} on exec \
+             after re-materializing; reinstall the application resources",
+            node.display()
+        )),
+    }
+}
+
+/// 运行 `node --version`，返回终止它的信号（正常运行或非信号失败时为 None）。
+fn exec_killing_signal(node: &Path) -> Option<i32> {
+    let output = node_version_output(node)?;
+    terminating_signal(&output.status)
+}
+
+#[cfg(unix)]
+fn terminating_signal(status: &std::process::ExitStatus) -> Option<i32> {
+    use std::os::unix::process::ExitStatusExt;
+    status.signal()
+}
+
+#[cfg(not(unix))]
+fn terminating_signal(_status: &std::process::ExitStatus) -> Option<i32> {
+    None
+}
+
+/// 用同字节的同目录临时文件 rename 覆盖原文件，换出一个新的 vnode。
+fn rematerialize_file(path: &Path) -> std::io::Result<()> {
+    let file_name = path
+        .file_name()
+        .ok_or_else(|| std::io::Error::other(format!("path has no file name: {}", path.display())))?
+        .to_string_lossy()
+        .into_owned();
+    let temp = path.with_file_name(format!("{file_name}.exec-heal.{}.tmp", std::process::id()));
+    // fs::copy 连权限位一起复制，rename 后可执行位不丢。
+    std::fs::copy(path, &temp)?;
+    let result = std::fs::rename(&temp, path);
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temp);
+    }
+    result
+}
+
 /// 获取指定 Node.js 二进制的版本号（例如 "22.22.0"）
 fn get_node_version_of(node: &Path) -> Option<String> {
     let output = node_version_output(node)?;
@@ -624,6 +701,83 @@ mod tests {
             .expect("system time after epoch")
             .as_nanos();
         std::env::temp_dir().join(format!("dsh-runtime-{name}-{}-{nonce}", std::process::id()))
+    }
+
+    /// 换出 vnode 时必须保留字节与可执行位，否则「自愈」会把运行时弄坏。
+    #[cfg(unix)]
+    #[test]
+    fn rematerialize_keeps_bytes_and_exec_bit_on_a_fresh_inode() {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+
+        let dir = unique_runtime_test_dir("rematerialize");
+        std::fs::create_dir_all(&dir).expect("temp dir");
+        let path = dir.join("node");
+        std::fs::write(&path, b"#!/bin/sh\nexit 0\n").expect("write probe binary");
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
+            .expect("set exec bit");
+        let before = std::fs::metadata(&path).expect("metadata").ino();
+
+        rematerialize_file(&path).expect("rematerialize");
+
+        let after = std::fs::metadata(&path).expect("metadata");
+        assert_ne!(before, after.ino(), "rename should hand out a new inode");
+        assert_ne!(after.permissions().mode() & 0o111, 0);
+        assert_eq!(
+            std::fs::read(&path).expect("read back"),
+            b"#!/bin/sh\nexit 0\n"
+        );
+        assert!(
+            std::fs::read_dir(&dir)
+                .expect("read dir")
+                .flatten()
+                .all(|entry| entry.file_name() == "node"),
+            "temp file should not be left behind"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// 能正常跑起来的 node 不该被判为「被信号杀死」，避免无谓地重写运行时。
+    #[cfg(unix)]
+    #[test]
+    fn healthy_binary_reports_no_killing_signal() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = unique_runtime_test_dir("exec-probe");
+        std::fs::create_dir_all(&dir).expect("temp dir");
+        let path = dir.join("node");
+        std::fs::write(&path, b"#!/bin/sh\necho v22.22.0\n").expect("write probe binary");
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
+            .expect("set exec bit");
+
+        assert_eq!(exec_killing_signal(&path), None);
+        assert!(ensure_bundled_node_executable(&path).is_ok());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// 换出 vnode 后依然被信号杀死，说明二进制本身坏了：要如实报错，
+    /// 而不是让失败推迟到插件安装阶段变成一句无输出的 exit code 1。
+    #[cfg(unix)]
+    #[test]
+    fn persistently_killed_binary_is_reported() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = unique_runtime_test_dir("exec-killed");
+        std::fs::create_dir_all(&dir).expect("temp dir");
+        let path = dir.join("node");
+        std::fs::write(&path, b"#!/bin/sh\nkill -9 $$\n").expect("write probe binary");
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
+            .expect("set exec bit");
+
+        assert_eq!(exec_killing_signal(&path), Some(9));
+        let error = ensure_bundled_node_executable(&path).expect_err("should stay unusable");
+        assert!(
+            error.starts_with("NODE_EXEC_KILLED:") && error.contains("signal 9"),
+            "unexpected error: {error}"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// 完整 Git 安装版把 HTTPS helper 直接放在 exec path 时仍应识别。
