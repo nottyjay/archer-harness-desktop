@@ -1,11 +1,18 @@
 import type { SessionSummary, TurnSummary } from '../types'
 import { describe, expect, it } from 'vitest'
 import {
+  TURNREWIND_REASON_ALREADY_UNDONE,
+  TURNREWIND_REASON_CONFLICT,
   TURNREWIND_REASON_EXPIRED,
   TURNREWIND_REASON_GIT_UNAVAILABLE,
+  TURNREWIND_REASON_NON_EMPTY_DIR,
   TURNREWIND_REASON_SNAPSHOT_FAILED,
+  TURNREWIND_REASON_SNAPSHOT_TOO_LARGE,
+  TURNREWIND_REASON_TOO_MANY_FILES,
+  TURNREWIND_REASON_TOO_MANY_OVERSIZED,
   TURNREWIND_REASON_TURN_ACTIVE,
   TURNREWIND_REASON_UNSAFE_PATH,
+  TURNREWIND_REASON_UNSAFE_WORKSPACE,
 } from '../../shared/constants'
 import { TURNREWIND_VISIBLE_FILE_ROWS } from '../constants'
 import {
@@ -166,6 +173,13 @@ describe('reasonKey', () => {
     expect(reasonKey(TURNREWIND_REASON_TURN_ACTIVE)).toBe('turnActiveReason')
     expect(reasonKey(TURNREWIND_REASON_SNAPSHOT_FAILED)).toBe('snapshotFailedReason')
     expect(reasonKey(TURNREWIND_REASON_UNSAFE_PATH)).toBe('unsafePathReason')
+    expect(reasonKey(TURNREWIND_REASON_UNSAFE_WORKSPACE)).toBe('unsafeWorkspaceReason')
+    expect(reasonKey(TURNREWIND_REASON_TOO_MANY_FILES)).toBe('tooManyFilesReason')
+    expect(reasonKey(TURNREWIND_REASON_SNAPSHOT_TOO_LARGE)).toBe('snapshotTooLargeReason')
+    expect(reasonKey(TURNREWIND_REASON_TOO_MANY_OVERSIZED)).toBe('tooManyOversizedReason')
+    expect(reasonKey(TURNREWIND_REASON_ALREADY_UNDONE)).toBe('alreadyUndoneReason')
+    expect(reasonKey(TURNREWIND_REASON_CONFLICT)).toBe('conflictReason')
+    expect(reasonKey(TURNREWIND_REASON_NON_EMPTY_DIR)).toBe('nonEmptyDirReason')
   })
 
   it('未知码/空值返回 null：调用方原样显示，绝不编文案', () => {

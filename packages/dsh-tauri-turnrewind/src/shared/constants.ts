@@ -41,3 +41,24 @@ export const TURNREWIND_REASON_SNAPSHOT_FAILED = 'TURNREWIND_SNAPSHOT_FAILED'
 
 /** 撤销命中了不允许穿透的目标路径（父级符号链接/junction、非空目录占位）。 */
 export const TURNREWIND_REASON_UNSAFE_PATH = 'TURNREWIND_UNSAFE_PATH'
+
+/** 会话 cwd 是家目录祖先/盘根等系统目录：出于安全拒绝快照，撤销不可用。 */
+export const TURNREWIND_REASON_UNSAFE_WORKSPACE = 'TURNREWIND_UNSAFE_WORKSPACE'
+
+/** 工作区纳入快照的文件数超过单快照上限：该轮不提供撤销。 */
+export const TURNREWIND_REASON_TOO_MANY_FILES = 'TURNREWIND_TOO_MANY_FILES'
+
+/** 快照聚合字节超过单快照上限：该轮不提供撤销。 */
+export const TURNREWIND_REASON_SNAPSHOT_TOO_LARGE = 'TURNREWIND_SNAPSHOT_TOO_LARGE'
+
+/** 超大文件多到无法逐个排除：该轮不提供撤销。 */
+export const TURNREWIND_REASON_TOO_MANY_OVERSIZED = 'TURNREWIND_TOO_MANY_OVERSIZED'
+
+/** 该 turn 已被撤销过一次，不能重复撤销。 */
+export const TURNREWIND_REASON_ALREADY_UNDONE = 'TURNREWIND_ALREADY_UNDONE'
+
+/** 撤销前相关文件又被并发修改，撤销被拒绝（未改动任何文件）。 */
+export const TURNREWIND_REASON_CONFLICT = 'TURNREWIND_CONFLICT'
+
+/** 撤销目标路径当前是非空目录：撤销不递归删除目录。 */
+export const TURNREWIND_REASON_NON_EMPTY_DIR = 'TURNREWIND_NON_EMPTY_DIR'
