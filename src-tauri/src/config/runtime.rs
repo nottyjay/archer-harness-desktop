@@ -440,10 +440,7 @@ pub fn expand_home_path(path: &str) -> PathBuf {
     if path == "~" {
         return user_home_dir().unwrap_or_else(|| PathBuf::from("~"));
     }
-    if let Some(rest) = path
-        .strip_prefix("~/")
-        .or_else(|| path.strip_prefix("~\\"))
-    {
+    if let Some(rest) = path.strip_prefix("~/").or_else(|| path.strip_prefix("~\\")) {
         return join_user_home(rest);
     }
     PathBuf::from(path)

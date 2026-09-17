@@ -12,6 +12,7 @@ trustPolicy: no-downgrade
 
 packages:
   - packages/*
+  - fixtures/dsh-hmr-client-probe
 
 patchedDependencies:
   bumpp: patches/bumpp.patch

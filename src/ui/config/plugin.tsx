@@ -1,3 +1,4 @@
+import type { PreinstallLogPayload } from '@/store/modules/preinstall/types'
 import type { DshPlugin } from '@/types'
 import { CircleExclamation } from '@gravity-ui/icons'
 import { Button, Chip, Label, Spinner, Tooltip } from '@heroui/react'
@@ -13,6 +14,7 @@ import { useStore } from 'valtio-define'
 import { Ellipsis as TextEllipsis } from '@/components/ellipsis'
 import { Empty } from '@/components/empty'
 import { Item } from '@/components/item'
+import { Logs } from '@/components/logs'
 import { Modal } from '@/components/modal'
 import { Panel } from '@/components/panel'
 import { queryKeys } from '@/config/query-keys'
@@ -49,11 +51,14 @@ const actionChip = tv({
  *   `preinstall-log` 事件实时推送）。
  * - 「异常」标记：插件带 `error` 字段（安装/升级/卸载失败或页面运行期上报）
  *   时显示 danger 图标按钮，Tooltip 展示错误详情，行内可直接升级/卸载修复。
+ * - 「载入本地插件」：选未打包目录，经 `dsh plugin add link:<abs>` 写入档案后重启。
+ *   之后 client 走 DSH HMR；宿主源码变更由桌面端自动重启。
  */
 export function ConfigPlugin() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const preinstall = useStore(store.preinstall)
+  const { skip_user_plugins: skipUserPlugins } = useStore(store.setting)
 
   const { data: pluginList, isLoading, error: pluginError } = useQuery({
     queryKey: queryKeys.plugins,
@@ -76,10 +81,17 @@ export function ConfigPlugin() {
   const loading = isLoading
   const error = pluginError ? String(pluginError) : ''
 
+  const [installingLocal, setInstallingLocal] = useState(false)
+  const [installLogs, setInstallLogs] = useState<string[]>([])
   const [dialogHolder, openDialog] = useOverlay(Modal, { type: 'holder' })
+
+  useListen<PreinstallLogPayload>('preinstall-log', (e) => {
+    setInstallLogs(prev => [...prev, e.payload.line].slice(-200))
+  })
 
   /** 行内操作进行中状态：id + 操作类型（update/remove/disable/enable/snapshot/restore/delete-snapshot），保证单例运行 */
   const [busy, setBusy] = useState<{ id: string, action: 'update' | 'remove' | 'disable' | 'enable' | 'snapshot' | 'restore' | 'delete-snapshot' } | null>(null)
+  const panelBusy = !!busy || installingLocal || preinstall.installing
 
   const upgrade = useMutation({
     mutationFn: (id: string) => invoke<void>('update_dsh_plugin', { id }),
@@ -391,29 +403,104 @@ export function ConfigPlugin() {
     }
   }
 
+  async function onLoadLocal() {
+    if (panelBusy)
+      return
+    let path: string | null
+    try {
+      path = await invoke<string | null>('pick_local_plugin_directory')
+    }
+    catch (e) {
+      console.error('[ConfigPlugin] pick local plugin failed:', e)
+      toast(t('plugins.load_local_failed'), {})
+      return
+    }
+    if (!path)
+      return
+    setInstallingLocal(true)
+    setInstallLogs([])
+    try {
+      const result = await invoke<{ name: string, version: string }>('install_local_plugin', { path })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.plugins })
+      toast(t('plugins.load_local_toast', { name: result.name }), {})
+    }
+    catch (e) {
+      silence(e, 'plugin load-local: error already shown by toast')
+      console.error('[ConfigPlugin] load local plugin failed:', e)
+      toast(t('plugins.load_local_failed'), {})
+    }
+    finally {
+      setInstallingLocal(false)
+      // add 前后端会停服务；无论成败都拉起，避免界面仍显示运行中。
+      void store.harness.restart()
+    }
+  }
+
   return (
     <div>
       <Panel.Header
         className="sticky top-0 bg-canvas z-10 pb-3"
         title={t('plugins.title')}
         action={(
-          <Tooltip delay={0}>
-            <Button
-              size="sm"
-              variant="primary"
-              className="rounded-md"
-              onPress={store.preinstall.open}
-              isDisabled={preinstall.installing}
-            >
-              {t('preinstall.open_preset')}
-            </Button>
-            <Tooltip.Content>
-              <p>{t('preinstall.settings_hint')}</p>
-            </Tooltip.Content>
-          </Tooltip>
+          <div className="flex items-center gap-2">
+            <Tooltip delay={0}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-md"
+                onPress={() => { void onLoadLocal() }}
+                isDisabled={panelBusy}
+              >
+                <span className="flex items-center gap-1">
+                  <If cond={installingLocal} then={<Spinner size="sm" color="current" />} />
+                  {t('plugins.load_local')}
+                </span>
+              </Button>
+              <Tooltip.Content className="max-w-[320px]">
+                <p>{t('plugins.load_local_hint')}</p>
+              </Tooltip.Content>
+            </Tooltip>
+            <Tooltip delay={0}>
+              <Button
+                size="sm"
+                variant="primary"
+                className="rounded-md"
+                onPress={store.preinstall.open}
+                isDisabled={panelBusy}
+              >
+                {t('preinstall.open_preset')}
+              </Button>
+              <Tooltip.Content>
+                <p>{t('preinstall.settings_hint')}</p>
+              </Tooltip.Content>
+            </Tooltip>
+          </div>
         )}
         description={t('plugins.panel_tooltip')}
       />
+      <If cond={skipUserPlugins}>
+        <div className="mb-3 flex items-start justify-between gap-3 rounded-md border border-warning/30 bg-warning/10 px-3 py-2">
+          <p className="m-0 text-xs leading-[18px] text-ink">{t('plugins.skip_banner')}</p>
+          <Button
+            size="sm"
+            variant="primary"
+            className="shrink-0 rounded-md"
+            onPress={() => { void store.harness.resumeUserPlugins() }}
+            isDisabled={panelBusy}
+          >
+            {t('plugins.skip_resume')}
+          </Button>
+        </div>
+      </If>
+
+      <If cond={installingLocal || installLogs.length > 0}>
+        <Logs
+          logs={installLogs}
+          limit={80}
+          className="mb-4"
+          bodyClassName="max-h-[160px]"
+        />
+      </If>
 
       {/* 加载 / 失败 / 空态 */}
       <Panel.Loadable loading={loading} error={error}>

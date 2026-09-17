@@ -47,8 +47,7 @@ fn save_disabled(profile: &Path, map: &HashMap<String, DisabledEntry>) -> Result
     }
     let json =
         serde_json::to_string_pretty(map).map_err(|e| format!("DISABLED_RENDER_FAILED: {e}"))?;
-    fs::write(&path, format!("{json}\n"))
-        .map_err(|e| format!("DISABLED_WRITE_FAILED: {e}"))
+    fs::write(&path, format!("{json}\n")).map_err(|e| format!("DISABLED_WRITE_FAILED: {e}"))
 }
 
 /// 读取 profile 的 `cordis.patch.yml`，返回「配置层显式禁用」条目的目标集合。
@@ -193,7 +192,7 @@ pub(crate) fn strip_patch_disable(profile: &Path, id: &str) -> Result<bool, Stri
 
 /// 仅从 `dsh.profile.bundles` 移除指定插件（不动 `dependencies`）。
 /// 返回是否实际移除了条目。
-fn remove_from_bundles(manifest: &mut serde_json::Value, id: &str) -> bool {
+pub(crate) fn remove_from_bundles(manifest: &mut serde_json::Value, id: &str) -> bool {
     let Some(bundles) = manifest
         .get_mut("dsh")
         .and_then(|d| d.get_mut("profile"))
@@ -209,7 +208,7 @@ fn remove_from_bundles(manifest: &mut serde_json::Value, id: &str) -> bool {
 
 /// 把插件加回 `dsh.profile.bundles`（若已存在则不重复添加）。
 /// 返回是否实际新增了条目。
-fn add_to_bundles(manifest: &mut serde_json::Value, id: &str) -> bool {
+pub(crate) fn add_to_bundles(manifest: &mut serde_json::Value, id: &str) -> bool {
     let Some(bundles) = manifest
         .get_mut("dsh")
         .and_then(|d| d.get_mut("profile"))
@@ -281,10 +280,10 @@ pub(crate) fn disable_plugin_at(profile: &Path, id: &str) -> Result<(), String> 
     }
     fs_guard::validate_id(id)?;
     let manifest_path = profile.join("package.json");
-    let content = fs::read_to_string(&manifest_path)
-        .map_err(|e| format!("DISABLE_READ_MANIFEST: {e}"))?;
-    let mut manifest: serde_json::Value = serde_json::from_str(&content)
-        .map_err(|e| format!("DISABLE_PARSE_MANIFEST: {e}"))?;
+    let content =
+        fs::read_to_string(&manifest_path).map_err(|e| format!("DISABLE_READ_MANIFEST: {e}"))?;
+    let mut manifest: serde_json::Value =
+        serde_json::from_str(&content).map_err(|e| format!("DISABLE_PARSE_MANIFEST: {e}"))?;
     if !is_in_dependencies(&manifest, id) {
         return Err(format!(
             "DISABLE_NOT_INSTALLED: plugin {id} is not installed"
@@ -346,10 +345,10 @@ pub(crate) fn enable_plugin_at(
 ) -> Result<(), String> {
     fs_guard::validate_id(id)?;
     let manifest_path = profile.join("package.json");
-    let content = fs::read_to_string(&manifest_path)
-        .map_err(|e| format!("ENABLE_READ_MANIFEST: {e}"))?;
-    let mut manifest: serde_json::Value = serde_json::from_str(&content)
-        .map_err(|e| format!("ENABLE_PARSE_MANIFEST: {e}"))?;
+    let content =
+        fs::read_to_string(&manifest_path).map_err(|e| format!("ENABLE_READ_MANIFEST: {e}"))?;
+    let mut manifest: serde_json::Value =
+        serde_json::from_str(&content).map_err(|e| format!("ENABLE_PARSE_MANIFEST: {e}"))?;
     if !is_in_dependencies(&manifest, id) {
         return Err(format!(
             "ENABLE_NOT_INSTALLED: plugin {id} is not installed"
@@ -460,7 +459,9 @@ mod tests {
         assert!(manifest["dependencies"]["dshmarket"].is_string());
         // bundles 中已移除
         let bundles = manifest["dsh"]["profile"]["bundles"].as_array().unwrap();
-        assert!(!bundles.iter().any(|b| b.as_str() == Some("dsh-better-sidebar")));
+        assert!(!bundles
+            .iter()
+            .any(|b| b.as_str() == Some("dsh-better-sidebar")));
         assert!(bundles.iter().any(|b| b.as_str() == Some("dshmarket")));
 
         let _ = fs::remove_dir_all(&profile);
@@ -472,7 +473,9 @@ mod tests {
         disable_plugin_at(&profile, "dsh-better-sidebar").unwrap();
 
         let map = load_disabled(&profile);
-        let entry = map.get("dsh-better-sidebar").expect("disabled entry exists");
+        let entry = map
+            .get("dsh-better-sidebar")
+            .expect("disabled entry exists");
         assert_eq!(entry.reason, "user");
         assert!(!entry.disabled_at.is_empty());
         // 时间戳是纯数字字符串
@@ -489,7 +492,9 @@ mod tests {
 
         let manifest = read_manifest(&profile);
         let bundles = manifest["dsh"]["profile"]["bundles"].as_array().unwrap();
-        assert!(bundles.iter().any(|b| b.as_str() == Some("dsh-better-sidebar")));
+        assert!(bundles
+            .iter()
+            .any(|b| b.as_str() == Some("dsh-better-sidebar")));
 
         let _ = fs::remove_dir_all(&profile);
     }
@@ -653,7 +658,9 @@ mod tests {
         // bundles 已加回
         let manifest = read_manifest(&profile);
         let bundles = manifest["dsh"]["profile"]["bundles"].as_array().unwrap();
-        assert!(bundles.iter().any(|b| b.as_str() == Some("dsh-better-sidebar")));
+        assert!(bundles
+            .iter()
+            .any(|b| b.as_str() == Some("dsh-better-sidebar")));
 
         fs::remove_dir_all(&profile).ok();
     }

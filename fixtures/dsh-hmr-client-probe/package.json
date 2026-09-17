@@ -1,0 +1,28 @@
+{
+  "name": "dsh-hmr-client-probe",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Visible client-HMR probe for Archer Phase 1. Do not ship.",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./client": "./dist/client.cjs",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:cli"
+  }
+}

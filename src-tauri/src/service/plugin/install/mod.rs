@@ -30,6 +30,7 @@
 //! - [`allowlist`]：构建放行白名单解析与 pnpm-workspace.yaml 写回
 //! - [`diagnose`]：失败输出解析（网络 / git 传输层 / ANSI 清洗与消息挑选）
 //! - [`artifact`]：安装产物落盘核验（防「假成功」）+ 声明入口就地补构建
+//! - [`local`]：启动后手动载入未打包的本地开发插件（`dsh plugin add link:<abs>`）
 
 use crate::config;
 use crate::service::cli;
@@ -60,12 +61,14 @@ mod allowlist;
 mod artifact;
 mod diagnose;
 mod env;
+mod local;
 mod pnpm;
 mod single;
 mod spec;
 
 // 子模块对外 API：plugin 兄弟模块（verify / internal 等）与安装编排共用
 pub(crate) use env::build_plugin_envs;
+pub use local::{install_local, pick_local_plugin_directory, LocalPluginInstallResult};
 pub(crate) use pnpm::{
     bundled_pnpm_major, harness_prefer_bundled_pnpm, pnpm_major_version_at, profile_store_dir,
     profile_store_major,
@@ -455,7 +458,7 @@ async fn run_plugin_with_allow_build_retry(
 ///
 /// 识别到瞬时失败后再跑一次完整命令（有界，见 [`TRANSIENT_FS_RETRIES`]），每次重试前
 /// 短暂休眠等 reparse point 落定 / 杀软扫完；该失败是概率性的，重试即大概率越过。
-async fn run_plugin_install_with_transient_retry(
+pub(super) async fn run_plugin_install_with_transient_retry(
     app_handle: &AppHandle,
     node: &Path,
     args: &[OsString],
@@ -537,7 +540,10 @@ mod tests {
     #[test]
     fn transient_fs_failure_detects_uv_unknown_exit_code() {
         assert!(is_transient_fs_install_failure(-4094, ""));
-        assert!(is_transient_fs_install_failure(-4094, "some unrelated output"));
+        assert!(is_transient_fs_install_failure(
+            -4094,
+            "some unrelated output"
+        ));
     }
 
     #[test]
@@ -547,20 +553,38 @@ mod tests {
         let output = "[UNKNOWN] unknown error, open 'C:\\Users\\x\\.dsh\\profiles\\web\\node_modules\\dsh-tauri\\package.json'";
         assert!(is_transient_fs_install_failure(1, output));
         // `[unknown]` / `unknown error` 大小写不敏感
-        assert!(is_transient_fs_install_failure(1, &output.to_ascii_lowercase()));
+        assert!(is_transient_fs_install_failure(
+            1,
+            &output.to_ascii_lowercase()
+        ));
     }
 
     #[test]
     fn transient_fs_retry_delay_uses_exponential_backoff() {
-        assert_eq!(transient_fs_retry_delay(1), std::time::Duration::from_secs(1));
-        assert_eq!(transient_fs_retry_delay(2), std::time::Duration::from_secs(2));
-        assert_eq!(transient_fs_retry_delay(8), std::time::Duration::from_secs(64));
+        assert_eq!(
+            transient_fs_retry_delay(1),
+            std::time::Duration::from_secs(1)
+        );
+        assert_eq!(
+            transient_fs_retry_delay(2),
+            std::time::Duration::from_secs(2)
+        );
+        assert_eq!(
+            transient_fs_retry_delay(8),
+            std::time::Duration::from_secs(64)
+        );
     }
 
     #[test]
     fn transient_fs_failure_rejects_ordinary_failures() {
-        assert!(!is_transient_fs_install_failure(1, "ERR_PNPM_SPEC_NOT_SUPPORTED"));
-        assert!(!is_transient_fs_install_failure(254, "ENOENT: no such file"));
+        assert!(!is_transient_fs_install_failure(
+            1,
+            "ERR_PNPM_SPEC_NOT_SUPPORTED"
+        ));
+        assert!(!is_transient_fs_install_failure(
+            254,
+            "ENOENT: no such file"
+        ));
         assert!(!is_transient_fs_install_failure(
             3,
             "ERR_PNPM_FETCH_404 registry error"

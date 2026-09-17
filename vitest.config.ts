@@ -28,6 +28,7 @@ export default defineConfig({
       'test/wake-lock.test.ts',
       // issue #469：收起桌宠必须是销毁窗口（隐藏窗口里的视频仍在播放并持锁）。
       'test/pet-window-lifecycle.test.ts',
+      'test/plugin-load-local.test.ts',
     ],
     maxWorkers: 4,
     testTimeout: 30_000,

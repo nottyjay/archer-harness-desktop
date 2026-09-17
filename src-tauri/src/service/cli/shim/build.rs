@@ -358,9 +358,7 @@ mod tests {
 
     #[test]
     fn cmd_shim_escapes_percent() {
-        let dir = PathBuf::from(
-            r"C:\Users\100%test\AppData\Roaming\com.d3code.archer-harness",
-        );
+        let dir = PathBuf::from(r"C:\Users\100%test\AppData\Roaming\com.d3code.archer-harness");
         let content = build_cmd_shim(&dir, &sample_dsh_home());
         assert!(content.contains("100%%test"));
         assert!(!content.contains(r#"set "APP_DIR=C:\Users\100%test""#));
@@ -815,9 +813,7 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn ps1_shim_escapes_quotes() {
-        let dir = PathBuf::from(
-            r"C:\Users\o'brien\AppData\Roaming\com.d3code.archer-harness",
-        );
+        let dir = PathBuf::from(r"C:\Users\o'brien\AppData\Roaming\com.d3code.archer-harness");
         let content = build_ps1_shim(&dir, &sample_dsh_home());
         assert!(content.contains(r"o''brien"));
         // dsh_home 同样走 ps1 转义

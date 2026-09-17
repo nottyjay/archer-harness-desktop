@@ -38,8 +38,7 @@ const STARTUP_ACTION_ANCHOR: &str = "\t\tconst options = program.opts();";
 const STARTUP_ACTION_REPLACEMENT: &str = "\t\tconst options = program.opts();\n\t\t/* dsh-tauri-desktop: alpha embedded auth --skip-auth flag */\n\t\tif (options.skipAuth) process.env.DSH_SKIP_AUTH = \"1\";";
 
 // ── dsh-client-connection/lib/index.js ────────────────────────────────────────
-const CONNECTION_INDEX_JS: &str =
-    "node_modules/@deepseek-ai/dsh-client-connection/lib/index.js";
+const CONNECTION_INDEX_JS: &str = "node_modules/@deepseek-ai/dsh-client-connection/lib/index.js";
 const REJECTION_ANCHOR: &str = "\trequestRejection(request) {\n\t\tif (!isTrustedApiRequest(request, this.trustedHosts)) return 403;\n\t\treturn this.browserAuth.isAuthenticated(request) ? void 0 : 401;\n\t}";
 const REJECTION_PATCHED: &str = "\trequestRejection(request) {\n\t\tif (!isTrustedApiRequest(request, this.trustedHosts)) return 403;\n\t\tif (process.env.DSH_SKIP_AUTH === \"1\") return void 0;\n\t\treturn this.browserAuth.isAuthenticated(request) ? void 0 : 401;\n\t} /* dsh-tauri-desktop: alpha embedded auth --skip-auth flag */";
 const AUTHORIZE_ANCHOR: &str = "\tauthorizeIndex(request, response) {\n\t\treturn this.browserAuth.authorizeIndex(request, response);\n\t}";
@@ -108,7 +107,8 @@ mod tests {
         source.push_str("\t}\n");
         source.push_str("\t/** Authenticate an index request through the process-token exchange or cookie. */\n");
         source.push_str(AUTHORIZE_ANCHOR);
-        source.push_str("\n\tdsh web authentication required; reopen the URL printed by dsh web.\n");
+        source
+            .push_str("\n\tdsh web authentication required; reopen the URL printed by dsh web.\n");
         source
     }
 
@@ -165,8 +165,7 @@ mod tests {
         };
         assert!(patched.contains(PATCH_MARKER));
         assert!(patched.contains(".option(\"--skip-auth\", \"skip the browser-session token/cookie exchange; keeps the Host/Origin trust fence (for embedded UIs)\")"));
-        assert!(patched
-            .contains("\t\tif (options.skipAuth) process.env.DSH_SKIP_AUTH = \"1\";"));
+        assert!(patched.contains("\t\tif (options.skipAuth) process.env.DSH_SKIP_AUTH = \"1\";"));
     }
 
     /// 回归（issue #358）：npm 全局原版核心的 startup.js 在 `opts()` 之后**没有**
@@ -182,8 +181,7 @@ mod tests {
             panic!("expected startup patch on npm original layout");
         };
         assert!(patched.contains(PATCH_MARKER));
-        assert!(patched
-            .contains("\t\tif (options.skipAuth) process.env.DSH_SKIP_AUTH = \"1\";"));
+        assert!(patched.contains("\t\tif (options.skipAuth) process.env.DSH_SKIP_AUTH = \"1\";"));
     }
 
     /// 回归（issue #358）：pkg 打包核心的 allowLan 行必须在打补丁后原样保留，
@@ -197,10 +195,8 @@ mod tests {
             panic!("expected startup patch on pkg layout");
         };
         assert!(patched.contains(PATCH_MARKER));
-        assert!(patched
-            .contains("\t\tconst allowLan = process.env.DSH_PKG_ALLOW_LAN === \"1\";"));
-        assert!(patched
-            .contains("\t\tif (options.skipAuth) process.env.DSH_SKIP_AUTH = \"1\";"));
+        assert!(patched.contains("\t\tconst allowLan = process.env.DSH_PKG_ALLOW_LAN === \"1\";"));
+        assert!(patched.contains("\t\tif (options.skipAuth) process.env.DSH_SKIP_AUTH = \"1\";"));
     }
 
     #[test]
@@ -222,7 +218,10 @@ mod tests {
             patch_connection("requestRejection(request) { return 401; }"),
             PatchOutcome::AnchorMissing
         );
-        assert_eq!(patch_startup("no web command here"), PatchOutcome::AnchorMissing);
+        assert_eq!(
+            patch_startup("no web command here"),
+            PatchOutcome::AnchorMissing
+        );
 
         // `opts()` 行本身不存在（旧核心/上游布局彻底变化）→ 跳过
         let partial = startup_fixture().replace(

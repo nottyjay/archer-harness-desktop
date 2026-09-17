@@ -8,6 +8,7 @@ pub fn start(app_handle: &AppHandle) {
     tauri::async_runtime::spawn(async move {
         scheduler_permanent_loop(app_handle_clone).await;
     });
+    crate::service::plugin::start_link_watch(app_handle);
 }
 
 async fn scheduler_permanent_loop(app_handle: AppHandle) {

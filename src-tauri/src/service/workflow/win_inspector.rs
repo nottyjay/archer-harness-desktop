@@ -399,7 +399,11 @@ mod imp {
         let Some((base, prerelease)) = version.split_once("-rc.") else {
             return semver::Version::parse(version).is_ok();
         };
-        let Some(rc) = prerelease.split('.').next().and_then(|n| n.parse::<u64>().ok()) else {
+        let Some(rc) = prerelease
+            .split('.')
+            .next()
+            .and_then(|n| n.parse::<u64>().ok())
+        else {
             return false;
         };
         base != "0.1.0" || rc >= 8
@@ -413,7 +417,10 @@ mod imp {
         if version.as_deref().is_some_and(official_inspector_available) {
             // 新核心不需要社区注入；同时清理旧版本遗留的 patch，避免重复挂载。
             prune_patch_if_uninstalled(&profile)?;
-            log::info!("DSH {:?} provides the official Windows process inspector", version);
+            log::info!(
+                "DSH {:?} provides the official Windows process inspector",
+                version
+            );
             return Ok(());
         }
         ensure_patch_scaffold(&profile)?;
@@ -423,7 +430,10 @@ mod imp {
         }
         ensure_patch(&profile)?;
         ensure_win_minimal_preset(app_handle)?;
-        log::info!("legacy win32 terminal compatibility applied to {:?}", profile.display());
+        log::info!(
+            "legacy win32 terminal compatibility applied to {:?}",
+            profile.display()
+        );
         Ok(())
     }
 

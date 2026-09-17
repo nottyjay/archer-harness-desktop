@@ -7,7 +7,7 @@
 use crate::config;
 use crate::logger;
 use crate::service::core;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tauri_plugin_opener::OpenerExt;
 
 /// 健康检查（通过 Rust 代理，避免 WebView CORS 问题）
@@ -244,6 +244,16 @@ pub async fn open_external_url(app_handle: AppHandle, url: String) -> Result<(),
         .opener()
         .open_url(url, None::<&str>)
         .map_err(|e| e.to_string())
+}
+
+/// 打开主窗口开发者工具，便于查看壳层 console 与内嵌 Harness iframe 的插件 client 日志。
+#[tauri::command]
+pub fn open_webview_devtools(app_handle: AppHandle) -> Result<(), String> {
+    let window = app_handle
+        .get_webview_window("main")
+        .ok_or_else(|| "WINDOW_NOT_FOUND: main window missing".to_string())?;
+    window.open_devtools();
+    Ok(())
 }
 
 #[cfg(test)]

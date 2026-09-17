@@ -1,0 +1,3 @@
+- insert:
+    - id: dsh-hmr-client-probe
+      name: dsh-hmr-client-probe

@@ -1,7 +1,8 @@
 //! 预装与已安装插件的增删改查、管理。
 //!
 //! 包括首次启动的预装插件引导（安装/取消/跳过/待办检测/打开仓库）、已安装
-//! 插件的列表/升级/卸载，以及运行期异常的记录与「卸除此插件并继续检测」修复。
+//! 插件的列表/升级/卸载、启动后手动载入本地未打包插件，以及运行期异常的记录
+//! 与「禁用/卸除此插件并继续检测」修复。
 
 use crate::config;
 use crate::service::plugin;
@@ -210,6 +211,21 @@ pub fn recover_plugin(app_handle: AppHandle, id: String) -> Result<(), String> {
     Ok(())
 }
 
+/// 当前档案是否跳过用户插件启动（读 store，不依赖 Harness 进程）。
+#[tauri::command]
+pub fn get_skip_user_plugins(app_handle: AppHandle) -> bool {
+    config::get_store_dat_setting(&app_handle).skip_user_plugins
+}
+
+/// 打开或关闭当前档案的用户插件跳过，并立即同步 bundles / sidecar。
+///
+/// 调用方随后 `restart()` 让下次 spawn 读到过滤后的 bundles。不切安全档案、
+/// 不卸载；关闭时把 sidecar 里且未禁用的包加回。
+#[tauri::command]
+pub fn set_skip_user_plugins(app_handle: AppHandle, enabled: bool) -> Result<(), String> {
+    plugin::set_skip_user_plugins(&app_handle, enabled)
+}
+
 /// 禁用单个已安装插件：从 profile 的 `dsh.profile.bundles` 移除（代码完全不加载），
 /// 并写入 profile 的独立禁用清单。与卸载不同，禁用保留 node_modules 内的包体，
 /// 启用时无需重新下载。
@@ -240,7 +256,10 @@ pub fn enable_dsh_plugin(
 /// 创建单个插件的快照（覆盖式：已存在则整体替换），存档于
 /// `$DSH_HOME/.plugin-backups/<id>.tgz`。
 #[tauri::command]
-pub fn snapshot_plugin(app_handle: AppHandle, id: String) -> Result<plugin::snapshot::SnapshotInfo, String> {
+pub fn snapshot_plugin(
+    app_handle: AppHandle,
+    id: String,
+) -> Result<plugin::snapshot::SnapshotInfo, String> {
     plugin::snapshot::create(&app_handle, &id)
 }
 
@@ -255,10 +274,7 @@ pub fn snapshot_plugins(
 
 /// 查询单个插件的快照信息（存在性 + 时间 + 大小 + 是否含配置段）。
 #[tauri::command]
-pub fn get_plugin_backup(
-    app_handle: AppHandle,
-    id: String,
-) -> plugin::snapshot::PluginBackupInfo {
+pub fn get_plugin_backup(app_handle: AppHandle, id: String) -> plugin::snapshot::PluginBackupInfo {
     plugin::snapshot::get(&app_handle, &id)
 }
 
@@ -274,4 +290,23 @@ pub async fn restore_plugin(app_handle: AppHandle, id: String) -> Result<(), Str
 #[tauri::command]
 pub fn delete_plugin_backup(app_handle: AppHandle, id: String) -> Result<(), String> {
     plugin::snapshot::delete(&app_handle, &id)
+}
+
+/// 弹出系统文件夹选择器，返回本地插件根目录；用户取消时为 `None`。
+#[tauri::command]
+pub async fn pick_local_plugin_directory(app_handle: AppHandle) -> Result<Option<String>, String> {
+    plugin::pick_local_plugin_directory(&app_handle).await
+}
+
+/// 把未打包的本地开发插件以 `link:<abs>` 写入当前档案。
+///
+/// `dsh plugin add` 不会热挂正在运行的进程；调用方应在成功后重启 Harness。
+#[tauri::command]
+pub async fn install_local_plugin(
+    app_handle: AppHandle,
+    path: String,
+) -> Result<plugin::LocalPluginInstallResult, String> {
+    let result = plugin::install_local(&app_handle, std::path::Path::new(&path)).await?;
+    plugin::watch::force_emit(&app_handle);
+    Ok(result)
 }

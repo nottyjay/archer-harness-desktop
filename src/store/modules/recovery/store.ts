@@ -8,7 +8,7 @@ import { createRecovery } from './utils'
 
 /**
  * 插件异常修复模块：启动崩溃或运行期异常时定位问题插件，并提供
- * 「从快照还原 / 卸除此插件并继续检测 / 重启 / 安全模式 / 暂不处理」。
+ * 「从快照还原 / 禁用此插件并继续检测 / 卸载 / 重启 / 安全模式 / 暂不处理」。
  *
  * 与 harness 模块的分工：harness 负责服务生命周期，本模块只负责
  * 「哪个插件坏了、怎么修」——修复动作完成后统一回调 harness 重启。
@@ -96,6 +96,25 @@ export const recovery = defineStore({
       }
       catch (err) {
         console.error('[Harness] recover_plugin failed:', err)
+        this.recovery = { ...this.recovery, busy: false, attempts: this.recovery.attempts + 1 }
+      }
+    },
+
+    /** 「禁用此插件并继续检测」：走桌面禁用清单（可逆），不卸载。 */
+    async disableAndRedetect(ids: readonly string[]) {
+      if (this.recovery.busy || ids.length === 0)
+        return
+      this.recovery = { ...this.recovery, busy: true }
+      try {
+        for (const id of ids) {
+          await invoke('disable_dsh_plugin', { id })
+        }
+        this.dismissedRecoveryIds = this.dismissedRecoveryIds.filter(x => !ids.includes(x))
+        this.clear()
+        await harness.restart()
+      }
+      catch (err) {
+        console.error('[Harness] disable_dsh_plugin failed:', err)
         this.recovery = { ...this.recovery, busy: false, attempts: this.recovery.attempts + 1 }
       }
     },

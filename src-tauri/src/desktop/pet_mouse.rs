@@ -232,8 +232,8 @@ fn listen_mouse_rdev(store: Arc<Mutex<Option<MouseCursorPos>>>) -> Result<(), St
 fn listen_mouse_macos(store: Arc<Mutex<Option<MouseCursorPos>>>) -> Result<(), String> {
     use core_foundation::runloop::CFRunLoop;
     use core_graphics::event::{
-        CallbackResult, CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement,
-        CGEventType,
+        CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement, CGEventType,
+        CallbackResult,
     };
 
     CGEventTap::with_enabled(
@@ -262,7 +262,10 @@ fn listen_mouse_macos(store: Arc<Mutex<Option<MouseCursorPos>>>) -> Result<(), S
         },
         CFRunLoop::run_current,
     )
-    .map_err(|()| "CGEventTap::with_enabled failed (accessibility permission denied or HID unavailable)".to_string())?;
+    .map_err(|()| {
+        "CGEventTap::with_enabled failed (accessibility permission denied or HID unavailable)"
+            .to_string()
+    })?;
 
     Ok(())
 }

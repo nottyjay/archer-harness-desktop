@@ -21,13 +21,16 @@
 //! - [`verify`]：预装插件完整性自检（清单引用但 node_modules 产物缺失时 `pnpm install` 修复）
 //! - [`install`]：对外安装/升级/卸载编排（目录模块 `install/`：编排入口、spec 准备、
 //!   子进程环境、pnpm 选版、allowBuilds 白名单、错误诊断与产物核验），
-//!   以及启动时对 `resources/deprecated-plugins.json` 登记的社区插件自动卸载
+//!   以及启动时对 `resources/deprecated-plugins.json` 登记的社区插件自动卸载；
+//!   本地未打包插件走 `install::local`（`dsh plugin add link:<abs>`，下次启动才进 Cordis）
 //! - [`errors`]：插件错误记录（安装/升级/卸载失败 + 页面运行期上报，持久化）
 //! - [`process`]：dsh 子进程启动与输出流逐行转发
 //! - [`recovery`]：插件异常定位与一键离线卸载
 //! - [`safe`]：安全档案启动前的用户插件清除（只留内置插件与核心包）
+//! - [`skip`]：当前档案跳过用户插件启动（临时移出 bundles，不卸载）
 //! - [`cancel`]：Windows 下取消正在进行的安装
 //! - [`watch`]：已安装插件文件监控（轮询指纹比对 + `dsh-plugins-updated` 事件推送）
+//! - [`linkwatch`]：用户 `link:` 插件的 tsdown watch + 宿主源码变更重启
 
 mod cancel;
 pub mod disable;
@@ -35,10 +38,12 @@ pub mod errors;
 mod install;
 mod installed;
 mod internal;
+mod linkwatch;
 mod preset;
 mod process;
 pub mod recovery;
 mod safe;
+mod skip;
 pub mod snapshot;
 pub mod update;
 pub mod verify;
@@ -46,22 +51,27 @@ pub mod watch;
 
 pub(crate) use crate::service::profile::ensure_profile_pnpm_policy;
 pub use cancel::cancel;
+pub use disable::{disable, enable};
 pub(crate) use install::harness_prefer_bundled_pnpm;
 pub(crate) use install::uninstall_deprecated_plugins;
-pub use install::{install, remove, update};
+pub use install::{
+    install, install_local, pick_local_plugin_directory, remove, update, LocalPluginInstallResult,
+};
 pub(crate) use installed::{ensure_profile_npmrc, installed_name, list_installed, profile_dir};
 pub use installed::{list, PreinstallPlugin};
 pub(crate) use internal::cancel as cancel_internal_plugins;
 pub(crate) use internal::ensure as ensure_internal_plugins;
+pub(crate) use linkwatch::{start as start_link_watch, stop_all as stop_link_watch};
 pub use preset::repo_url_of;
 pub(crate) use preset::{
     bundled_plugin_dir, current_preset_hash, load_presets, preinstall_pending,
     remove_legacy_bundled_plugins,
 };
-pub(crate) use safe::purge_user_plugins_in_safe_profile;
-pub use disable::{disable, enable};
 pub use recovery::{
     detect as detect_recovery, uninstall as uninstall_recovery, PluginRecoveryInfo,
 };
+pub(crate) use safe::purge_user_plugins_in_safe_profile;
+pub use skip::set_skip_user_plugins;
+pub(crate) use skip::sync_skip_for_launch;
 pub(crate) use verify::ensure_preset_plugins;
 pub use watch::DshPlugin;

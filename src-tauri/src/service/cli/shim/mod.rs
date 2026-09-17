@@ -55,9 +55,7 @@ mod test_util {
 
     pub(super) fn sample_app_dir() -> PathBuf {
         if cfg!(windows) {
-            PathBuf::from(
-                r"C:\Users\test\AppData\Roaming\com.d3code.archer-harness",
-            )
+            PathBuf::from(r"C:\Users\test\AppData\Roaming\com.d3code.archer-harness")
         } else {
             PathBuf::from("/home/test/.local/share/com.d3code.archer-harness")
         }

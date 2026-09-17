@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { If } from 'react-if-lite'
 import { useStore } from 'valtio-define'
+import { button } from '@/components/primitives'
 import { useIframeMessage } from '@/hooks/use-iframe-message'
 import { useIframePost } from '@/hooks/use-iframe-post'
 import { store } from '@/store'
@@ -32,6 +34,8 @@ export function Webview() {
 
   const { status } = useStore(store.harness)
   const { recovery } = useStore(store.recovery)
+  const { skip_user_plugins: skipUserPlugins } = useStore(store.setting)
+  const { t } = useTranslation()
 
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const post = useIframePost(iframeRef)
@@ -46,7 +50,7 @@ export function Webview() {
       <main className="relative flex min-h-0 flex-1 flex-col bg-canvas">
         <Navbar />
         <div className="min-h-0 flex-1">
-          {/* 能定位到问题插件时展示全屏恢复页（卸除此插件并继续检测）；否则普通错误页 */}
+          {/* 能定位到问题插件时展示全屏恢复页（禁用/卸载并继续检测）；否则普通错误页 */}
           <If cond={recovery.required} else={<Setup />}>
             <Recovery fullScreen />
           </If>
@@ -84,6 +88,19 @@ export function Webview() {
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={() => post({ type: 'dsh://sidebar:toggle' })}
       />
+      <If cond={skipUserPlugins}>
+        <div className="flex items-center justify-between gap-3 border-b border-warning/30 bg-warning/10 px-3 py-2">
+          <p className="m-0 min-w-0 text-xs leading-[18px] text-ink">{t('plugins.skip_banner')}</p>
+          <button
+            className={button({ tone: 'primary', size: 'sm' })}
+            onClick={() => {
+              void store.harness.resumeUserPlugins()
+            }}
+          >
+            {t('plugins.skip_resume')}
+          </button>
+        </div>
+      </If>
       <Iframe iframeRef={iframeRef} />
     </main>
   )

@@ -167,10 +167,7 @@ fn collision_safe_path(backup_dir: &Path, profile: &str, timestamp: &str) -> Pat
 ///
 /// 只备份当前激活的 profile（不是整个 $DSH_HOME），
 /// 输出到 `$DSH_HOME/.backups/{profile}-{yyyymmddhhmmss}.tar.zst`，更新清单，并按保留份数裁剪。
-pub fn create_backup(
-    app_handle: &AppHandle,
-    options: BackupOptions,
-) -> Result<BackupInfo, String> {
+pub fn create_backup(app_handle: &AppHandle, options: BackupOptions) -> Result<BackupInfo, String> {
     let backup_dir = get_backup_dir(app_handle);
     let timestamp = now_timestamp();
     // 只备份当前激活的 profile 目录（其他 profile 不参与备份）
@@ -181,9 +178,7 @@ pub fn create_backup(
 
     archive::create_archive(&source, &dest, options.include_credentials)?;
 
-    let size = fs::metadata(&dest)
-        .map(|m| m.len())
-        .unwrap_or(0);
+    let size = fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);
 
     let info = BackupInfo {
         timestamp: timestamp.clone(),
@@ -193,8 +188,8 @@ pub fn create_backup(
     };
 
     // 更新清单：清单损坏时中止写入，避免用空清单覆盖导致既有索引丢失
-    let mut manifest = read_manifest(&backup_dir)
-        .map_err(|e| format!("BACKUP_MANIFEST_CORRUPT: {e}"))?;
+    let mut manifest =
+        read_manifest(&backup_dir).map_err(|e| format!("BACKUP_MANIFEST_CORRUPT: {e}"))?;
     manifest.backups.push(ManifestEntry {
         timestamp: info.timestamp.clone(),
         profile: active.clone(),
@@ -218,7 +213,7 @@ pub fn list_backups(app_handle: &AppHandle) -> Vec<BackupInfo> {
         Ok(m) => m,
         Err(e) => {
             log::error!("[backup] list_backups: manifest unreadable: {e}");
-            return vec![]
+            return vec![];
         }
     };
     let active = crate::service::profile::active_profile(app_handle);
@@ -253,7 +248,9 @@ pub fn delete_backup(app_handle: &AppHandle, timestamp: &str) -> Result<(), Stri
         Err(e) => return Err(format!("BACKUP_MANIFEST_CORRUPT: {e}")),
     };
     // 同时匹配 profile 和 timestamp，避免误删其他 profile 的同时间戳备份
-    manifest.backups.retain(|e| !(e.profile == active && e.timestamp == timestamp));
+    manifest
+        .backups
+        .retain(|e| !(e.profile == active && e.timestamp == timestamp));
     write_manifest(&backup_dir, &manifest)?;
     Ok(())
 }
@@ -288,22 +285,21 @@ pub fn restore_backup(
             // 重命名旧 profile → 备份目录（避开文件锁），解压到新目录，
             // 成功后删除旧备份；失败则回滚（rename 旧目录回来）
             let dest = crate::service::profile::profile_dir_of(app_handle, &active);
-            let backup_old = std::path::PathBuf::from(format!(
-                "{}-{}.restore-bak",
-                dest.display(),
-                timestamp
-            ));
+            let backup_old =
+                std::path::PathBuf::from(format!("{}-{}.restore-bak", dest.display(), timestamp));
             // 清理可能残留的旧备份目录
             let _ = fs::remove_dir_all(&backup_old);
             // 重命名旧 profile（即使有子进程在读，rename 也能成功）
             fs::rename(&dest, &backup_old).map_err(|e| {
-                format!("BACKUP_RESTORE_RENAME_OLD: {e} (old={}, new={})",
-                    dest.display(), backup_old.display())
+                format!(
+                    "BACKUP_RESTORE_RENAME_OLD: {e} (old={}, new={})",
+                    dest.display(),
+                    backup_old.display()
+                )
             })?;
             // 创建空的新目录
-            fs::create_dir_all(&dest).map_err(|e| {
-                format!("BACKUP_RESTORE_MKDIR_NEW: {e} (dest={})", dest.display())
-            })?;
+            fs::create_dir_all(&dest)
+                .map_err(|e| format!("BACKUP_RESTORE_MKDIR_NEW: {e} (dest={})", dest.display()))?;
             // 解压到新目录
             let extract_result = archive::extract_archive(&archive_path, &dest);
             match extract_result {
@@ -315,16 +311,17 @@ pub fn restore_backup(
                     // 失败：回滚（删除半成品新目录，把旧目录 rename 回来）
                     let _ = fs::remove_dir_all(&dest);
                     let _ = fs::rename(&backup_old, &dest);
-                    return Err(format!("BACKUP_RESTORE_EXTRACT_FAILED: {e}。已自动回滚到原状态。"));
+                    return Err(format!(
+                        "BACKUP_RESTORE_EXTRACT_FAILED: {e}。已自动回滚到原状态。"
+                    ));
                 }
             }
         }
         RestoreMode::AsNew => {
             // 创建新档案目录：$DSH_HOME/profiles/<profile>-<timestamp>
             let profiles_root = config::get_dsh_data_path(app_handle).join("profiles");
-            fs::create_dir_all(&profiles_root).map_err(|e| {
-                format!("BACKUP_RESTORE_MKDIR_PROFILES: {e}")
-            })?;
+            fs::create_dir_all(&profiles_root)
+                .map_err(|e| format!("BACKUP_RESTORE_MKDIR_PROFILES: {e}"))?;
             let new_dir = profiles_root.join(format!("{active}-{timestamp}"));
             archive::extract_archive(&archive_path, &new_dir)?;
         }
@@ -348,7 +345,10 @@ mod tests {
         let ts = now_timestamp();
         // 格式：yyyymmddhhmmss（紧凑 14 位）
         assert_eq!(ts.len(), 14, "时间戳长度应为 14: {ts}");
-        assert!(ts.chars().all(|c| c.is_ascii_digit()), "时间戳应全为数字: {ts}");
+        assert!(
+            ts.chars().all(|c| c.is_ascii_digit()),
+            "时间戳应全为数字: {ts}"
+        );
     }
 
     /// 集成测试：create_archive 真实文件系统往返（验证 zstd 多线程在 CI/release 下可用）
@@ -358,7 +358,8 @@ mod tests {
         static COUNTER: AtomicUsize = AtomicUsize::new(0);
         let suffix = COUNTER.fetch_add(1, Ordering::SeqCst);
 
-        let tmp_root = std::env::temp_dir().join(format!("dsh-backup-int-{}-{}", std::process::id(), suffix));
+        let tmp_root =
+            std::env::temp_dir().join(format!("dsh-backup-int-{}-{}", std::process::id(), suffix));
         let _ = fs::remove_dir_all(&tmp_root);
         fs::create_dir_all(&tmp_root).unwrap();
 
@@ -419,9 +420,8 @@ mod tests {
     /// 直接测试用户实际备份文件的完整还原（绕过 GUI）
     #[test]
     fn restore_real_backup_to_temp() {
-        let backup = std::path::Path::new(
-            "/Users/coderstory/.dsh/.backups/2026-08-31T15-04-18.tar.zst"
-        );
+        let backup =
+            std::path::Path::new("/Users/coderstory/.dsh/.backups/2026-08-31T15-04-18.tar.zst");
         if !backup.exists() {
             eprintln!("[skip] 备份文件不存在: {}", backup.display());
             return;
@@ -438,18 +438,24 @@ mod tests {
         archive::extract_archive(backup, &dest).expect("extract_archive 失败");
 
         // 递归统计还原后的文件数和大小
-        fn walk(p: &std::path::Path, files: &mut u64, dirs: &mut u64, links: &mut u64, size: &mut u64) {
+        fn walk(
+            p: &std::path::Path,
+            files: &mut u64,
+            dirs: &mut u64,
+            links: &mut u64,
+            size: &mut u64,
+        ) {
             let Ok(rd) = fs::read_dir(p) else { return };
             for e in rd.flatten() {
-                let Ok(meta) = fs::symlink_metadata(e.path()) else { continue };
+                let Ok(meta) = fs::symlink_metadata(e.path()) else {
+                    continue;
+                };
                 if meta.is_dir() {
                     *dirs += 1;
                     walk(&e.path(), files, dirs, links, size);
-                }
-                else if meta.file_type().is_symlink() {
+                } else if meta.file_type().is_symlink() {
                     *links += 1;
-                }
-                else if meta.is_file() {
+                } else if meta.is_file() {
                     *files += 1;
                     *size += meta.len();
                 }
@@ -468,15 +474,27 @@ mod tests {
         println!("  文件:     {}", files);
         println!("  目录:     {}", dirs);
         println!("  符号链接: {}", links);
-        println!("  总大小:   {} bytes ({:.2} MB)", total_size, total_size as f64 / 1_048_576.0);
+        println!(
+            "  总大小:   {} bytes ({:.2} MB)",
+            total_size,
+            total_size as f64 / 1_048_576.0
+        );
 
         // 抽样验证关键文件
-        for name in ["cordis.patch.yml", "package.json", "pnpm-workspace.yaml", ".npmrc"] {
+        for name in [
+            "cordis.patch.yml",
+            "package.json",
+            "pnpm-workspace.yaml",
+            ".npmrc",
+        ] {
             let path = dest.join(name);
             if path.exists() {
-                println!("  ✓ {} ({} bytes)", name, fs::metadata(&path).unwrap().len());
-            }
-            else {
+                println!(
+                    "  ✓ {} ({} bytes)",
+                    name,
+                    fs::metadata(&path).unwrap().len()
+                );
+            } else {
                 println!("  ✗ {} 缺失", name);
             }
         }
@@ -488,11 +506,13 @@ mod tests {
             println!("  ✓ node_modules ({} 文件/目录)", nm_n);
         }
 
-        println!("\n压缩比: {:.2}x ({} → {} bytes)",
+        println!(
+            "\n压缩比: {:.2}x ({} → {} bytes)",
             total_size as f64 / backup_size as f64,
-            total_size, backup_size);
+            total_size,
+            backup_size
+        );
 
         let _ = fs::remove_dir_all(&dest);
     }
 }
-

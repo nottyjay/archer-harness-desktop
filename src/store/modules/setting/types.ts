@@ -14,6 +14,8 @@ export interface AppSetting {
   close_action: string
   backup_retention_count: number
   backup_include_credentials: boolean
+  /** 当前档案启动时跳过用户插件（不切安全档案、不卸载） */
+  skip_user_plugins: boolean
 }
 
 /**

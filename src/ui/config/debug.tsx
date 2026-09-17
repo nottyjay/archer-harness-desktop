@@ -408,7 +408,20 @@ export function ConfigDebug() {
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-ink">{t('ui.logs')}</span>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              className="rounded-md h-6 px-2 text-xs"
+              variant="ghost"
+              onPress={() => {
+                void invoke('open_webview_devtools').catch((err: unknown) => {
+                  console.error('[ConfigDebug] open devtools failed:', err)
+                  toast(t('ui.open_devtools_failed'), { variant: 'danger' })
+                })
+              }}
+            >
+              {t('ui.open_devtools')}
+            </Button>
             <Button
               isIconOnly
               size="sm"
@@ -429,6 +442,7 @@ export function ConfigDebug() {
             </Button>
           </div>
         </div>
+        <p className="text-[11px] text-muted">{t('ui.logs_debug_hint')}</p>
         <Surface className="bg-default rounded-md p-2 min-h-[140px] max-h-[180px] font-mono text-[11px] w-full leading-relaxed overflow-auto">
           {logs || t('ui.no_logs')}
         </Surface>

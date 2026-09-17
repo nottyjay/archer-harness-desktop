@@ -208,8 +208,7 @@ fn parse_plugins(profile: &Path, presets: &[PreinstallPluginInfo]) -> Vec<DshPlu
                 repo_url,
                 bundled: bundled.contains(id.as_str()),
                 disabled: disabled_map.contains_key(id),
-                patch_disabled: patch_disabled_set.contains(id.as_str())
-                    || patch_disabled_by_name,
+                patch_disabled: patch_disabled_set.contains(id.as_str()) || patch_disabled_by_name,
                 recommended: preset.map(|p| p.recommended).unwrap_or(false),
                 fix: preset.map(|p| p.fix).unwrap_or(false),
                 internal: internal_names.contains(id.as_str()),
@@ -599,10 +598,7 @@ mod tests {
     /// - 不在 bundles 且不在禁用清单 → bundled=false, disabled=false（未加载，启用会失败）
     #[test]
     fn parse_plugins_distinguishes_disabled_from_unloaded() {
-        let dir = std::env::temp_dir().join(format!(
-            "dsh-watch-disabled-{}",
-            std::process::id()
-        ));
+        let dir = std::env::temp_dir().join(format!("dsh-watch-disabled-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir.join("node_modules")).unwrap();
         let manifest = serde_json::json!({
@@ -623,7 +619,11 @@ mod tests {
         for id in ["dsh-loaded", "dsh-disabled", "dsh-unloaded"] {
             let pkg_dir = dir.join("node_modules").join(id);
             std::fs::create_dir_all(&pkg_dir).unwrap();
-            std::fs::write(pkg_dir.join("package.json"), format!(r#"{{"name":"{id}"}}"#)).unwrap();
+            std::fs::write(
+                pkg_dir.join("package.json"),
+                format!(r#"{{"name":"{id}"}}"#),
+            )
+            .unwrap();
         }
         // 仅 dsh-disabled 写入禁用清单。
         let disabled = serde_json::json!({
@@ -661,7 +661,10 @@ mod tests {
                     "dshmarket",
                     r#"{"name":"dshmarket","version":"1.13.1","dsh":{"bundle":{}}}"#,
                 ),
-                ("dsh-tauri-pet", r#"{"name":"dsh-tauri-pet","version":"0.1.0"}"#),
+                (
+                    "dsh-tauri-pet",
+                    r#"{"name":"dsh-tauri-pet","version":"0.1.0"}"#,
+                ),
                 ("dsh-other", r#"{"name":"dsh-other","version":"0.1.0"}"#),
             ],
         );

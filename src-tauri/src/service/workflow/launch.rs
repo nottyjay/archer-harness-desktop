@@ -397,6 +397,12 @@ pub async fn launch(app_handle: tauri::AppHandle) -> Result<(), String> {
         log::warn!("safe mode user plugin purge failed: {e}");
     }
 
+    // 当前档案跳过用户插件：从 bundles 临时拿掉用户插件，不写禁用清单、不切档案。
+    // 必须在 spawn 之前。开关关闭时 restore sidecar。失败只告警，不阻断启动。
+    if let Err(e) = crate::service::plugin::sync_skip_for_launch(&app_handle) {
+        log::warn!("skip user plugins sync failed: {e}");
+    }
+
     // Linux 起步前探测 inotify 监视上限：harness 服务（dsh web）用 chokidar 递归
     // 监视 profile 目录，上限过低会在启动一瞬间抛 ENOSPC 直接退出（issue #116）。
     // 进程无法自我调高该参数，这里只做告警（启动日志 + 读取 run logs 中的环境信息），
@@ -433,10 +439,10 @@ pub async fn launch(app_handle: tauri::AppHandle) -> Result<(), String> {
     if let Err(e) = crate::service::patch::workspace::apply(&app_handle) {
         log::warn!("workspace worktree membership patch failed: {e}");
     }
-    // 当前 DSH client-HMR 会卸载第三方插件却不重新挂载。debug 直接联接本地
-    // 插件源码，故将 rebuilt 降级为自动刷新页面；release 保持上游行为。
+    // 当前 DSH client-HMR 会卸载第三方插件却不重新挂载。启动时探测上游是否
+    // 已修好；未修好则把 rebuilt 降级为整页刷新。release 与 debug 同一套。
     if let Err(e) = crate::service::patch::client_hmr::apply(&app_handle) {
-        log::warn!("debug client plugin reload fallback patch failed: {e}");
+        log::warn!("client plugin reload fallback patch failed: {e}");
     }
     // 预防性处理：pnpm 在无 TTY 环境（dsh-market 等子进程）下重装/更新插件时，
     // 清理/重建 node_modules 会触发交互确认并因无 TTY 直接中止

@@ -87,9 +87,7 @@ mod tests {
         let alpha_getter = "get sessionIds() {\nreturn this.record.sessionIds.filter((id) => this.host.sessionPath(id) === this.record.path);\n}";
         let alpha_mutate = "const sessionIds = changed.sessionIds.filter((id) => this.host.sessionPath(id) === changed.path);";
         // 还原被 GETTER/ATTACH/MUTATE 三个 ORIGINAL 片段锚定的真实成员源码。
-        let source = format!(
-            "{alpha_getter}\n{alpha_attach}{ATTACH_ORIGINAL}\n{alpha_mutate}\n"
-        );
+        let source = format!("{alpha_getter}\n{alpha_attach}{ATTACH_ORIGINAL}\n{alpha_mutate}\n");
         let PatchOutcome::Patched(patched) = patch_source(&source) else {
             panic!("expected alpha.3 source to be patched");
         };

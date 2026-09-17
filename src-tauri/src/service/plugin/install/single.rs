@@ -443,7 +443,8 @@ mod tests {
 
     /// 造一个最小 profile：写入 `pnpm-lock.yaml` 与 `node_modules/dsh-probe/package.json`。
     fn probe_profile(label: &str, lock: &str, installed: Option<&str>) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("dsh-plugin-fp-{}-{label}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("dsh-plugin-fp-{}-{label}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("node_modules").join("dsh-probe")).unwrap();
         std::fs::write(dir.join("pnpm-lock.yaml"), lock).unwrap();

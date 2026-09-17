@@ -367,11 +367,15 @@ mod tests {
         let missing = vec![
             (
                 "dsh-tauri".to_string(),
-                PathBuf::from("C:\\Users\\t\\.dsh\\profiles\\safe\\node_modules\\dsh-tauri\\package.json"),
+                PathBuf::from(
+                    "C:\\Users\\t\\.dsh\\profiles\\safe\\node_modules\\dsh-tauri\\package.json",
+                ),
             ),
             (
                 "dsh-tauri-ui".to_string(),
-                PathBuf::from("C:\\Users\\t\\.dsh\\profiles\\safe\\node_modules\\dsh-tauri-ui\\package.json"),
+                PathBuf::from(
+                    "C:\\Users\\t\\.dsh\\profiles\\safe\\node_modules\\dsh-tauri-ui\\package.json",
+                ),
             ),
         ];
         // 两个内置插件都解析到源目录，但源目录下 package.json 均不可读（缺失源）
@@ -397,10 +401,8 @@ mod tests {
     /// 回落通用 silent-fail 诊断。
     #[test]
     fn bundled_source_present_falls_back_to_generic_detail() {
-        let root = std::env::temp_dir().join(format!(
-            "dsh-source-present-test-{}",
-            std::process::id()
-        ));
+        let root =
+            std::env::temp_dir().join(format!("dsh-source-present-test-{}", std::process::id()));
         let dir = root.join("dsh-tauri");
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("package.json"), r#"{"name":"dsh-tauri"}"#).unwrap();

@@ -14,6 +14,7 @@ export const setting = defineStore({
     backup_retention_count: 10,
     backup_include_credentials: false,
     language: null as string | null,
+    skip_user_plugins: false,
   }),
   persist: {
     key: 'setting',

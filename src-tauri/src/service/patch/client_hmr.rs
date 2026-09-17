@@ -1,13 +1,14 @@
-//! Debug 客户端插件重载兼容补丁。
+//! 客户端插件重载兼容补丁。
 //!
-//! 当前内置 DSH `0.1.1-rc.2` 的 client-HMR 在收到 `rebuilt` 后会卸载旧插件，
-//! 但第三方插件的 Loader 条目不会重新挂载，表现为构建后插件消失、手动刷新才恢复。
-//! debug 桌面端本来就直接联接本地插件源码，因此将该坏 hot-swap 降级为页面自动刷新：
-//! 仍由 `/plugins/events` 精确触发，不轮询页面，也不会影响 release。
+//! 旧版 DSH client-HMR 在收到 `rebuilt` 后会卸载旧插件，但第三方插件的 Loader
+//! 条目不会重新挂载，表现为构建后插件消失、手动刷新才恢复。桌面端把该坏
+//! hot-swap 降级为页面自动刷新：仍由 `/plugins/events` 精确触发。当前上游若已
+//! 恢复 `invalidate` → `prefetch` 流程，本补丁判定为 AlreadyPatched，release 与
+//! debug 都走同一套探测。
 
 use crate::utils::{patch_dsh, PatchOutcome};
 
-// HARDCODE：以下锚点绑定内置 DSH 0.1.1-rc.2 的 client-HMR bundle；仅 debug 生效。
+// HARDCODE：以下锚点绑定旧版 DSH client-HMR bundle；上游修好后自动跳过。
 const PATCH_MARKER: &str = "dsh-tauri-desktop: debug client plugin reload fallback";
 const ORIGINAL: &str = r#"case "rebuilt":
 						queue = queue.then(() => reload(frame.id)).catch((error) => {
@@ -40,16 +41,9 @@ fn patch_source(source: &str) -> PatchOutcome {
     PatchOutcome::Patched(source.replacen(ORIGINAL, PATCHED, 1))
 }
 
-/// debug 启动前把损坏的插件 hot-swap 降级为自动页面刷新。
-#[cfg(debug_assertions)]
+/// 启动前：损坏的插件 hot-swap 降级为自动页面刷新；上游已修好则跳过。
 pub fn apply(app_handle: &tauri::AppHandle) -> Result<(), String> {
     patch_dsh(app_handle, CLIENT_HMR_CLIENT_JS, patch_source)
-}
-
-/// release 不修改客户端重载行为。
-#[cfg(not(debug_assertions))]
-pub fn apply(_app_handle: &tauri::AppHandle) -> Result<(), String> {
-    Ok(())
 }
 
 #[cfg(test)]

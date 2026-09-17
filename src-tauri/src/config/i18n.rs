@@ -83,6 +83,7 @@ pub fn t(key: &str) -> String {
         "menu.exit_fullscreen" => ("退出全屏幕", "Exit Full Screen"),
         "menu.about" => ("关于 Desktop", "About Desktop"),
         "menu.run_logs" => ("运行日志", "Run Logs"),
+        "plugins.load_local" => ("载入本地插件", "Load local plugin"),
         "menu.check_update" => ("检查更新", "Check for Updates"),
         "menu.restart" => ("重启", "Restart"),
         "menu.edit" => ("编辑", "Edit"),

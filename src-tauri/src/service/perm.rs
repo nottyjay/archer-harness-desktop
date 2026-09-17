@@ -96,7 +96,11 @@ fn probe(dir: &Path, remedy_root: &Path, prefix: &str) -> Result<(), String> {
         Err(error) if is_permission_error(&error) => {
             // 指引里的修复目标必须是真实存在的目录（调用方给的 hint 理论上存在，
             // 但 `$DSH_HOME` 在全新安装时可能尚未创建）：不存在就退回被探测的那一层。
-            let remedy = if remedy_root.is_dir() { remedy_root } else { dir };
+            let remedy = if remedy_root.is_dir() {
+                remedy_root
+            } else {
+                dir
+            };
             Err(dir_error(prefix, dir, remedy, &error))
         }
         Err(error) => {

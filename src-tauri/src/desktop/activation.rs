@@ -184,8 +184,7 @@ pub fn rearm_pending_accessory_if_fullscreen<R: Runtime>(window: &WebviewWindow<
         if !is_fullscreen {
             return;
         }
-        let close_action =
-            crate::config::get_store_dat_setting(&window.app_handle()).close_action;
+        let close_action = crate::config::get_store_dat_setting(&window.app_handle()).close_action;
         if should_switch_to_accessory(false, &close_action) {
             set_pending_accessory(true);
         }

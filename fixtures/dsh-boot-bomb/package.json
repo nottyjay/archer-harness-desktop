@@ -1,0 +1,17 @@
+{
+  "name": "dsh-boot-bomb",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Intentional fail-loud plugin for Archer Phase 0 skip/disable tests. Do not ship.",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

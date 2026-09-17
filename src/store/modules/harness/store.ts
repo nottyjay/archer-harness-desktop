@@ -664,6 +664,59 @@ export const harness = defineStore({
       await this.restart()
     },
 
+    /**
+     * 当前档案跳过用户插件后重启：不切安全档案、不卸载。
+     * 内置插件与核心包仍加载；关闭 skip 后 sidecar 会把未禁用的用户插件加回。
+     */
+    async skipUserPlugins() {
+      if (this.busyAction)
+        return
+      try {
+        await invoke('set_skip_user_plugins', { enabled: true })
+        setting.skip_user_plugins = true
+      }
+      catch (err) {
+        console.error('[Harness] skip user plugins failed:', err)
+        const error = await attachStartupDiagnostics(err)
+        this.fail(error.message, error.logs, error.pluginConflictHint, error.inotifyLimitHint)
+        return
+      }
+      await this.restart()
+    },
+
+    /** 关闭跳过用户插件并重启，恢复完整加载（已禁用的保持禁用）。 */
+    async resumeUserPlugins() {
+      if (this.busyAction)
+        return
+      try {
+        await invoke('set_skip_user_plugins', { enabled: false })
+        setting.skip_user_plugins = false
+      }
+      catch (err) {
+        console.error('[Harness] resume user plugins failed:', err)
+        const error = await attachStartupDiagnostics(err)
+        this.fail(error.message, error.logs, error.pluginConflictHint, error.inotifyLimitHint)
+        return
+      }
+      await this.restart()
+    },
+
+    /** 禁用单个插件后重启（错误页点选；Harness 未运行时也能改清单）。 */
+    async disablePluginAndRetry(id: string) {
+      if (this.busyAction || !id)
+        return
+      try {
+        await invoke('disable_dsh_plugin', { id })
+      }
+      catch (err) {
+        console.error('[Harness] disable plugin failed:', err)
+        const error = await attachStartupDiagnostics(err)
+        this.fail(error.message, error.logs, error.pluginConflictHint, error.inotifyLimitHint)
+        return
+      }
+      await this.restart()
+    },
+
     /** 停止服务并回到停止态界面 */
     async shutdown() {
       if (this.busyAction)

@@ -779,7 +779,11 @@ mod tests {
 
     #[test]
     fn legacy_fallback_target_detection_is_path_component_aware() {
-        let base = Path::new("home").join("test").join(".dsh").join("profiles").join("web");
+        let base = Path::new("home")
+            .join("test")
+            .join(".dsh")
+            .join("profiles")
+            .join("web");
         assert!(is_legacy_profile_fallback_target(
             &base
                 .join(".dsh-module-fallback")
@@ -790,9 +794,7 @@ mod tests {
             &base.join("node_modules").join("anymatch"),
         ));
         assert!(!is_legacy_profile_fallback_target(
-            &base
-                .join(".dsh-module-fallback-old")
-                .join("anymatch"),
+            &base.join(".dsh-module-fallback-old").join("anymatch"),
         ));
     }
 

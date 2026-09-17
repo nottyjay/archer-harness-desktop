@@ -75,7 +75,17 @@ export function App() {
   })
 
   const { t } = useTranslation()
-  const { status } = useStore(store.harness)
+  const { status, busyAction } = useStore(store.harness)
+
+  useListen<{ id: string }>('link-plugin-host-changed', ({ payload }) => {
+    if (busyAction)
+      return
+    if (status !== 'ready' && status !== 'error')
+      return
+    toast(t('plugins.link_host_restart', { name: payload.id }), {})
+    void store.harness.restart()
+  })
+
   const { updateInfo, updating } = useStore(store.harnessUpdater)
   const { holder: coreBreakingHolder, confirmCoreBreaking } = useCoreBreakingConfirm()
 

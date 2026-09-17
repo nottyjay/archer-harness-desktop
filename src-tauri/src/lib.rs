@@ -63,6 +63,7 @@ pub fn run() {
                 if setting.installed {
                     service::workflow::stop_on_exit(app_handle.clone(), setting.port);
                 }
+                service::plugin::stop_link_watch();
                 // 已下载但用户没在应用内安装过更新 → 退出后自动打开安装器：
                 // 静默下载不打扰用户，代价是用户可能一直不主动升级，这里补上
                 // 「关闭应用即升级」这一步（安装器由系统默认处理器启动）。

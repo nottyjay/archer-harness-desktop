@@ -118,7 +118,9 @@ fn append_windows_dsh_dirs(dirs: &mut Vec<PathBuf>) {
         append(PathBuf::from(appdata).join("npm"));
     }
     if let Some(local_app_data) = std::env::var_os("LOCALAPPDATA") {
-        let fnm_versions = PathBuf::from(&local_app_data).join("fnm").join("node-versions");
+        let fnm_versions = PathBuf::from(&local_app_data)
+            .join("fnm")
+            .join("node-versions");
         if let Ok(entries) = std::fs::read_dir(&fnm_versions) {
             for entry in entries.flatten() {
                 // 版本目录下 `installation` 是 node 实际安装根；npm 全局包位于其

@@ -25,7 +25,7 @@ const REASON_KEYS: Record<string, { title: string, detail: string }> = {
  * 插件异常修复界面。
  *
  * - 启动崩溃（`fullScreen`）：渲染全屏恢复页（替换 Setup 错误内容），
- *   主按钮「卸除此插件并继续检测」。
+ *   主按钮「禁用此插件并继续检测」，卸载为次要。
  * - 运行期异常（应用仍在运行）：渲染醒目对话框（不阻断使用），可「暂不处理」。
  *
  * 数据全部来自 recovery store 的 `recovery` 状态（`plugin-recovery-required`
@@ -74,6 +74,9 @@ export function Recovery({ fullScreen = false }: { fullScreen?: boolean }) {
     ? t('recovery.heading_many', { count: info.plugins.length })
     : t('recovery.heading_one')
   const primaryLabel = multiple
+    ? t('recovery.disable_many', { count: info.plugins.length })
+    : t('recovery.disable_one')
+  const removeLabel = multiple
     ? t('recovery.remove_many', { count: info.plugins.length })
     : t('recovery.remove_one')
   const restoreLabel = restorableIds.length > 1
@@ -152,22 +155,35 @@ export function Recovery({ fullScreen = false }: { fullScreen?: boolean }) {
             </If>
             <Button
               className="rounded-md"
-              variant="danger"
+              variant="primary"
+              onPress={() => store.recovery.disableAndRedetect(info.plugins)}
+            >
+              <span className="flex items-center gap-1">
+                <If cond={recovery.busy} then={<Spinner size="sm" color="current" />} />
+                {recovery.busy ? t('recovery.disabling') : primaryLabel}
+              </span>
+            </Button>
+            <Button
+              className="rounded-md"
+              variant="ghost"
               onPress={() => store.recovery.recoverAndRedetect(info.plugins)}
             >
               <span className="flex items-center gap-1">
                 <If cond={recovery.busy} then={<Spinner size="sm" color="current" />} />
-                {recovery.busy ? t('recovery.removing') : primaryLabel}
+                {recovery.busy ? t('recovery.removing') : removeLabel}
               </span>
             </Button>
             <Button className="rounded-md" variant="tertiary" onPress={() => store.harness.restart()}>
               {t('recovery.restart')}
             </Button>
-            <Button className="rounded-md" variant="ghost" onPress={() => store.harness.enterSafeMode()}>
+            <Button className="rounded-md" variant="ghost" onPress={() => store.harness.skipUserPlugins()}>
               <span className="flex items-center gap-1">
                 <ShieldCheck className="size-4" />
-                {t('buttons.safe_mode')}
+                {t('buttons.skip_user_plugins')}
               </span>
+            </Button>
+            <Button className="rounded-md" variant="ghost" onPress={() => store.harness.enterSafeMode()}>
+              {t('buttons.safe_mode')}
             </Button>
             <Button className="rounded-md" variant="ghost" onPress={() => store.recovery.dismissRecovery()}>
               {t('recovery.dismiss')}

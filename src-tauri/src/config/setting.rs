@@ -79,6 +79,10 @@ pub struct Setting {
     /// 桌宠精灵图的显示宽度（逻辑像素）；`None` = 沿用窗口侧默认值。
     #[serde(default)]
     pub pet_size: Option<f64>,
+    /// 当前档案启动时跳过用户插件：从 `dsh.profile.bundles` 临时拿掉用户插件，
+    /// 不写禁用清单、不切安全档案。关闭后由 sidecar 加回。
+    #[serde(default)]
+    pub skip_user_plugins: bool,
 }
 
 pub const ZOOM_FACTOR_MIN: f64 = 0.5;
@@ -178,6 +182,7 @@ impl Default for Setting {
             pet_enabled: false,
             active_pet: None,
             pet_size: None,
+            skip_user_plugins: false,
         }
     }
 }
@@ -481,6 +486,22 @@ mod tests {
             "quit",
             "写入 store 再读回后关闭行为应保持不变"
         );
+    }
+
+    #[test]
+    fn skip_user_plugins_defaults_off_and_legacy_deserializes() {
+        assert!(
+            !Setting::default().skip_user_plugins,
+            "新安装不得默认跳过用户插件"
+        );
+        let legacy: Setting = serde_json::from_value(serde_json::json!({
+            "installed": true,
+            "port": 3080,
+            "auto_start": true,
+            "language": "zh-CN"
+        }))
+        .expect("legacy setting without skip_user_plugins should deserialize");
+        assert!(!legacy.skip_user_plugins);
     }
 
     #[test]

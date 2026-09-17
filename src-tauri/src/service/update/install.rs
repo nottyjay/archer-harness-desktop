@@ -536,7 +536,9 @@ mod tests {
         assert!(ensure_within_updates_dir(&root.join("app-setup.exe"), &root).is_ok());
         // 目录外的兄弟路径（前缀相同也不能放过：`updates-evil` 不是 `updates` 的子路径）
         assert!(ensure_within_updates_dir(&root.join("..").join("evil.exe"), &root).is_err());
-        let sibling = std::path::Path::new("root").join("updates-evil").join("x.exe");
+        let sibling = std::path::Path::new("root")
+            .join("updates-evil")
+            .join("x.exe");
         assert!(ensure_within_updates_dir(&sibling, &root).is_err());
     }
 }

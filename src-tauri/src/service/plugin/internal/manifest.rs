@@ -389,7 +389,9 @@ mod tests {
     #[test]
     fn local_link_dep_detects_only_directory_specs() {
         // link:/file: 前缀 → 本地目录链接（含历史遗留 file: 形式）
-        assert!(is_local_link_dep("link:C:/Apps/dsh/resources/internal-plugins/dsh-tauri"));
+        assert!(is_local_link_dep(
+            "link:C:/Apps/dsh/resources/internal-plugins/dsh-tauri"
+        ));
         assert!(is_local_link_dep("file:/Applications/.../dsh-tauri-ui"));
         // 无前缀的裸路径、registry 版本、git 引用都不是本地链接，绝不能误卸
         assert!(!is_local_link_dep("dsh-tauri@0.2.0"));

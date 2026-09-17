@@ -20,13 +20,19 @@ pub async fn backup_profile(
     let result = tauri::async_runtime::spawn_blocking(move || {
         backup::create_backup(
             &app,
-            backup::BackupOptions { include_credentials },
+            backup::BackupOptions {
+                include_credentials,
+            },
         )
     })
     .await
     .map_err(|e| format!("BACKUP_TASK: {e}"))?;
     match &result {
-        Ok(info) => log::info!("[backup] 创建成功: {} ({} bytes)", info.timestamp, info.size),
+        Ok(info) => log::info!(
+            "[backup] 创建成功: {} ({} bytes)",
+            info.timestamp,
+            info.size
+        ),
         Err(e) => log::error!("[backup] 创建失败: {e}"),
     }
     result
@@ -48,11 +54,9 @@ pub async fn restore_profile(
         backup::RestoreMode::Overwrite
     };
     let app = app_handle.clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        backup::restore_backup(&app, &timestamp, mode)
-    })
-    .await
-    .map_err(|e| format!("RESTORE_TASK: {e}"))?
+    tauri::async_runtime::spawn_blocking(move || backup::restore_backup(&app, &timestamp, mode))
+        .await
+        .map_err(|e| format!("RESTORE_TASK: {e}"))?
 }
 
 /// 列出所有备份。

@@ -1,11 +1,14 @@
 import type { IconComponent } from './loadable'
+import type { DshPlugin } from '@/types'
 import type { SetupStatus } from '@/store/modules/harness'
 import { ArrowDownToLine, CircleCheck, CircleExclamation, CircleInfo, Copy, Magnifier, Rocket, ShieldCheck } from '@gravity-ui/icons'
+import { useQuery } from '@tanstack/react-query'
 import { invoke } from '@tauri-apps/api/core'
 import { useTranslation } from 'react-i18next'
 import { If, Then } from 'react-if-lite'
 import { useStore } from 'valtio-define'
 import { button } from '@/components/primitives'
+import { queryKeys } from '@/config/query-keys'
 import { store } from '@/store'
 import { writeClipboardText } from '@/utils/clipboard'
 import { Loadable } from './loadable'
@@ -31,6 +34,10 @@ async function copyLogsHandler(t: (key: string) => string) {
   }
 }
 
+function isUserPlugin(plugin: DshPlugin): boolean {
+  return !plugin.internal && !plugin.id.startsWith('@deepseek-ai/')
+}
+
 /**
  * 安装/更新页：基于通用 Loadable 组件渲染，
  * 视觉与官方 web shell 的 boot 加载页（AppRoot）一致。
@@ -45,6 +52,7 @@ export function Setup() {
     errorLogs,
     pluginConflictHint,
     inotifyLimitHint,
+    busyAction,
   } = useStore(store.harness)
   const error = status === 'error'
   const installing = status === 'installing'
@@ -57,6 +65,15 @@ export function Setup() {
     : (error && errorLogs.length > 0 ? errorLogs : undefined)
   // 错误态的针对性提示：插件路由冲突 / Linux inotify 文件监视上限，二选一优先展示
   const hint = error ? (pluginConflictHint || inotifyLimitHint) : undefined
+  const busy = busyAction != null
+
+  const { data: plugins = [] } = useQuery({
+    queryKey: queryKeys.plugins,
+    queryFn: () => invoke<DshPlugin[]>('get_dsh_plugins'),
+    enabled: error,
+  })
+  const userPlugins = plugins.filter(isUserPlugin)
+  const disableable = userPlugins.filter(plugin => !plugin.disabled && !plugin.patchDisabled)
 
   return (
     <Loadable
@@ -72,36 +89,66 @@ export function Setup() {
       )}
       <If cond={error}>
         <Then>
-          {/* 错误态操作区：重试 / 复制日志 / 安全模式 三按钮放同一行，避免叠罗汉 */}
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <button
-              className={button({ tone: 'primary', size: 'sm' })}
-              onClick={() => {
-                void store.harness.boot()
-              }}
-            >
-              {t('app.retry')}
-            </button>
-            <button
-              className={button({ tone: 'ghost', size: 'sm' })}
-              onClick={() => copyLogsHandler(t)}
-            >
-              <Copy className="size-4" />
-              {t('buttons.copy_logs')}
-            </button>
-            <button
-              className={button({ tone: 'primary', size: 'sm' })}
-              onClick={() => {
-                void store.harness.enterSafeMode()
-              }}
-            >
-              <ShieldCheck className="size-4" />
-              {t('buttons.safe_mode')}
-            </button>
+          <div className="flex w-full flex-col items-center gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                className={button({ tone: 'primary', size: 'sm' })}
+                disabled={busy}
+                onClick={() => {
+                  void store.harness.skipUserPlugins()
+                }}
+              >
+                <ShieldCheck className="size-4" />
+                {t('buttons.skip_user_plugins')}
+              </button>
+              <button
+                className={button({ tone: 'ghost', size: 'sm' })}
+                disabled={busy}
+                onClick={() => {
+                  void store.harness.boot()
+                }}
+              >
+                {t('app.retry')}
+              </button>
+              <button
+                className={button({ tone: 'ghost', size: 'sm' })}
+                onClick={() => copyLogsHandler(t)}
+              >
+                <Copy className="size-4" />
+                {t('buttons.copy_logs')}
+              </button>
+              <button
+                className={button({ tone: 'ghost', size: 'sm' })}
+                disabled={busy}
+                onClick={() => {
+                  void store.harness.enterSafeMode()
+                }}
+              >
+                {t('buttons.safe_mode')}
+              </button>
+            </div>
+            <p className="m-0 text-xs leading-[18px] break-all text-load-muted">
+              {t('hints.skip_user_plugins')}
+            </p>
+            <If cond={disableable.length > 0}>
+              <div className="w-full max-h-40 overflow-auto rounded-md bg-black/5 p-2 text-left">
+                {disableable.map(plugin => (
+                  <div key={plugin.id} className="flex items-center justify-between gap-2 px-1 py-1.5">
+                    <code className="min-w-0 truncate font-mono text-xs text-ink">{plugin.id}</code>
+                    <button
+                      className={button({ tone: 'ghost', size: 'sm' })}
+                      disabled={busy}
+                      onClick={() => {
+                        void store.harness.disablePluginAndRetry(plugin.id)
+                      }}
+                    >
+                      {t('plugins.disable_and_retry')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </If>
           </div>
-          <p className="m-0 text-xs leading-[18px] break-all text-load-muted">
-            {t('hints.safe_mode')}
-          </p>
         </Then>
       </If>
     </Loadable>
